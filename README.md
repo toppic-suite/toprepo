@@ -54,7 +54,7 @@ This step extracts MS2 feature information from feature files generated from Top
 
 Run the command:
 ```
-python3 toprepo/src/process/msalign/extract_feature_info.py PXD029703 spectra_ms2.feature spectra_feature_info.tsv
+python3 toprepo/src/process/feature/extract_feature_info.py PXD029703 spectra_ms2.feature spectra_feature_info.tsv
 ```
 
 **1.4 Merge the spectral information extract from mzML and msalign files**
