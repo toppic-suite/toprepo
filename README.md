@@ -41,7 +41,7 @@ Run the command:
 python3 toprepo/src/process/msalign/extract_msalign_info.py PXD029703 spectra_ms2.msalign spectra_msalign_info.tsv
 ```
 
-**1.3 (optional) Extract feature information from feature file**
+**1.3 Extract feature information from feature file**
 
 This step extracts MS2 feature information (e.g., feature intensity, feature score, feature apex time) from feature files generated from TopFD and saved it into a TSV file.
 
