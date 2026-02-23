@@ -1,5 +1,6 @@
 import os
 import pandas as pd
+import sys
 
 def process_feature_file(feature_file):
     temp_df = pd.read_csv(feature_file, sep="\t")
@@ -41,22 +42,27 @@ def process_feature_file(feature_file):
     return result_df
 
 
-def process_all_feature_files(feature_folder, output_file):
-    
+def process_all_feature_files(dataset_id, feature_folder, output_file):
     feature_files = [f for f in os.listdir(feature_folder) if f.endswith(".feature")]
-
     for i, fname in enumerate(feature_files, 1):
         fpath = os.path.join(feature_folder, fname)
         print(f"[{i}/{len(feature_files)}] Processing {fname}")
-        project_id = fname.split("_")[0]
+        # project_id = fname.split("_")[0]
 
-        df = process_feature_file(fpath, project_id)
-        # add project id 
-        df["PROJECT_ID"] = project_id
+        df = process_feature_file(fpath)
+        # add dataset id 
+        df["DATASET_id"] = dataset_id
         # save to each file
         output_filename = fname.split('.')[0] + '_feature.tsv'
         output_file = os.path.join(feature_folder, output_filename)
         df.to_csv(output_file, sep="\t", index=False)
-       
-       
-    # print(f"Saved to: {output_file}")
+
+
+if __name__ == "__main__":
+    if len(sys.argv) != 4:
+        print("Usage: python script.py <dataset_id> <feature_filename> <output_tsv_filename>")
+    else:
+        dataset_id = sys.argv[1]
+        feature_file = sys.argv[2]
+        out_filename = sys.argv[3]
+        process_all_feature_files(dataset_id, feature_file, out_filename)
