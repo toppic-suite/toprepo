@@ -7,6 +7,8 @@ import pandas as pd
 def msalign_meta_extract(dataset_id, msalign_path):
     records = []
     current = None
+    records = []
+
     with open(msalign_path, 'r') as f:
         # current = {}
         for line in f:
@@ -16,6 +18,7 @@ def msalign_meta_extract(dataset_id, msalign_path):
 
             if line.startswith("BEGIN IONS"):
                 current = {}
+                peak_count  = 0
             elif line.startswith("END IONS"):
                 # Save only if all required fields are found
                 if current:
@@ -40,12 +43,17 @@ def msalign_meta_extract(dataset_id, msalign_path):
                         "PRECURSOR_CHARGE": current.get("PRECURSOR_CHARGE"),
                         "PRECURSOR_MASS": current.get("PRECURSOR_MASS"),
                         "PRECURSOR_INTENSITY": current.get("PRECURSOR_INTENSITY"),
-                        "PRECURSOR_FEATURE_ID": current.get("PRECURSOR_FEATURE_ID")  
+                        "PRECURSOR_FEATURE_ID": current.get("PRECURSOR_FEATURE_ID"),
+                        "MSALIGN_number_of_fragment_ions": peak_count  
                     })
                     current = None
             elif "=" in line and current is not None:
                 key, val = line.split("=", 1)
                 current[key] = val
+            elif current is not None:
+                parts = line.split() 
+                if len(parts) >= 4:
+                    peak_count += 1
 
     return records    
 
