@@ -3,22 +3,14 @@ import pandas as pd
 import sys
 
 
-def add_project_id(file_name, feature_df):
-    fname = os.path.basename(file_name)
-    project_id = fname.split("_ms2")[0].split("_")[0]
-    feature_df["PROJECT_ID"] = project_id
-    return feature_df
-
-
 def feature_merge(msalign_file, feature_file, out_filename):
 
     msalign_df = pd.read_csv(msalign_file, sep="\t")
     msalign_df["FILE_NAME"] = msalign_df["FILE_NAME"].astype(str)
     msalign_df["MS2_SCANS"] = msalign_df["MS2_SCANS"].astype(str)
-    msalign_df["PROJECT_ID"] = msalign_df["PROJECT_ID"].astype(str)
+    msalign_df["DATASET_ID"] = msalign_df["DATASET_ID"].astype(str)
 
     feature_df = pd.read_csv(feature_file, sep="\t")
-    feature_df = add_project_id(feature_file, feature_df) # check if it has project_id column
     # rename 
     rename_map = {
             "File_name": "FILE_NAME",
@@ -29,11 +21,11 @@ def feature_merge(msalign_file, feature_file, out_filename):
     # normalize
     feature_df["FILE_NAME"] = feature_df["FILE_NAME"].astype(str)
     feature_df["MS2_SCANS"] = feature_df["MS2_SCANS"].astype(str)
-    feature_df["PROJECT_ID"] = feature_df["PROJECT_ID"].astype(str)
+    feature_df["DATASET_ID"] = feature_df["DATASET_ID"].astype(str)
 
     feature_df_merged = msalign_df.merge(
         feature_df,
-        on=["PROJECT_ID", "FILE_NAME", "MS2_SCANS"],
+        on=["DATASET_ID", "FILE_NAME", "MS2_SCANS"],
         how="left"
     )
     # Save merged file
