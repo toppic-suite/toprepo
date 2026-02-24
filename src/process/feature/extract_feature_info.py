@@ -42,20 +42,11 @@ def process_feature_file(feature_file):
     return result_df
 
 
-def process_all_feature_files(dataset_id, feature_folder, output_file):
-    feature_files = [f for f in os.listdir(feature_folder) if f.endswith(".feature")]
-    for i, fname in enumerate(feature_files, 1):
-        fpath = os.path.join(feature_folder, fname)
-        print(f"[{i}/{len(feature_files)}] Processing {fname}")
-        # project_id = fname.split("_")[0]
-
-        df = process_feature_file(fpath)
-        # add dataset id 
-        df["DATASET_id"] = dataset_id
-        # save to each file
-        output_filename = fname.split('.')[0] + '_feature.tsv'
-        output_file = os.path.join(feature_folder, output_filename)
-        df.to_csv(output_file, sep="\t", index=False)
+def write_feature_file(dataset_id, feature_file, output_filename):
+    df = process_feature_file(feature_file)
+    df["DATASET_id"] = dataset_id
+    # save the file
+    df.to_csv(output_filename, sep="\t", index=False)
 
 
 if __name__ == "__main__":
@@ -65,4 +56,4 @@ if __name__ == "__main__":
         dataset_id = sys.argv[1]
         feature_file = sys.argv[2]
         out_filename = sys.argv[3]
-        process_all_feature_files(dataset_id, feature_file, out_filename)
+        write_feature_file(dataset_id, feature_file, out_filename)
