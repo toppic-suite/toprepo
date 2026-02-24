@@ -91,7 +91,7 @@ python3 toprepo/src/process/tsv/merge_mzml_msalign_info.py spectra_mzml_info.tsv
 
 **1.6 Preprocess PrSM identification tsv file reported by TopPIC**
 
-This step merges the spectral information extracted from mzML and MSALIGN files into a single TSV file.
+This step preprocess PrSM identification TSV file and adds "Dataset id" to the input TSV file.
 
 * Usage python3 prsm_preprocess.py <prsm_tsv_filename> <dataset_id> --output <output_tsv_filename>
 
