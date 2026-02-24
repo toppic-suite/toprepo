@@ -49,5 +49,3 @@ if __name__ == "__main__":
         feature_info_tsv = sys.argv[2]
         out_filename = sys.argv[3]
         feature_merge(msalign_info_tsv, feature_info_tsv, out_filename)
-       
-#     return merged_df
