@@ -81,12 +81,12 @@ This step merges the spectral information extracted from mzML and MSALIGN files 
 
 * Input:
    * mzml_info_filename: A TSV file containing spectral information extracted from mzML files
-   * msalign_info_filename: A TSV file containing MS2 spectral information extracted from msalign files
+   * msalign_feature_info_filename: A TSV file containing MS2 spectral and feature information extracted from msalign and feature files 
    * output_tsv_filename: A TSV output file for storing merged spectral information
 
 Run the command:
 ```
-python3 toprepo/src/process/tsv/merge_mzml_msalign_info.py spectra_mzml_info.tsv spectra_msalign_info.tsv spectra_mzml_msalign_info.tsv
+python3 toprepo/src/process/tsv/merge_mzml_msalign_info.py spectra_mzml_info.tsv spectra_msalign_feature_info.tsv spectra_mzml_msalign_info.tsv
 ```
 
 **1.6 Preprocess PrSM identification tsv file reported by TopPIC**
