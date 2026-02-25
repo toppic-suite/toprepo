@@ -6,11 +6,11 @@ Using mzML files, msalign files, feature files, and spectral identification (TSV
 
 ## 1. Generate TSV files with comprehensive spectral information
 
-We use an example mzML file spectra.mzML from MS dataset id PXD029703, and its corresponding msalign file spectra_ms2.msalign, feature file spectra_ms2.feature, and spectral identification file spectra_ms2_toppic_prsm_single.tsv to explain the method.
+We use an example mzML file spectra.mzML with dataset id PXD029703, and its corresponding msalign file spectra_ms2.msalign, feature file spectra_ms2.feature, and spectral identification file spectra_ms2_toppic_prsm_single.tsv to explain the method.
 
 **1.1 Extract spectral information from mzML file**
 
-This step extracts spectral information from an mzML file and saves it into a TSV file.
+This step extracts spectral information from the mzML file and saves it into a TSV file.
 
 * Usage:
 python3 extract_mzml_info.py <dataset_id> <input_mzml_filename> <output_tsv_filename>
@@ -27,7 +27,7 @@ python3 toprepo/src/process/mzml/extract_mzml_info.py PXD029703 spectra.mzML spe
 
 **1.2 Extract spectral information from msalign file**
 
-This step extracts MS2 spectral information from an msalign file and saves it into a TSV file.
+This step extracts MS2 spectral information from the msalign file and saves it into a TSV file.
 
 * Usage python3 extract_msalign_info.py <dataset_id> <input_msalign_filename> <output_tsv_filename>
 
@@ -43,7 +43,7 @@ python3 toprepo/src/process/msalign/extract_msalign_info.py PXD029703 spectra_ms
 
 **1.3 Extract feature information from feature file**
 
-This step extracts MS2 feature information (e.g., feature intensity, feature score, feature apex time) from a feature file generated from TopFD and saves it into a TSV file.
+This step extracts MS2 feature information (e.g., feature intensity, feature score, feature apex time) from the feature file and saves it into a TSV file.
 
 * Usage python3 extract_feature_info.py <dataset_id> <input_feature_filename> <output_tsv_filename>
 
