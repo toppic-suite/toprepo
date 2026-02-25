@@ -35,7 +35,7 @@ def process_feature_file(feature_file):
     result_df = (
         temp_df
         .groupby(['File_name', 'Scans'], as_index=False)
-        .apply(agg_func, include_groups=False)
+        .apply(agg_func)
         .reset_index(drop=True)
     )
 
@@ -47,6 +47,7 @@ def write_feature_file(dataset_id, feature_file, output_filename):
     df["DATASET_id"] = dataset_id
     # save the file
     df.to_csv(output_filename, sep="\t", index=False)
+    print(f"Processed feature file saved to: {output_filename}")
 
 
 if __name__ == "__main__":

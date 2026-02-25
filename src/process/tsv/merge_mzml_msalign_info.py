@@ -31,7 +31,7 @@ def meta_merge(mzml_meta_filename, msalign_meta_filename, output_file):
         'isolation_window_mz': "MZML isolation window target mz", 
         'isolation_window_lower_offset': "MZML isolation window lower offset",
         'isolation_window_upper_offset': "MZML isolation window upper offset", 
-        'ms1_scan_id': "mzML MS1 scan", 
+        'ms1_scan_id': "MZML MS1 scan", 
         'ms1_scan_begin': "MZML MS1 scan window lower limit",
         'ms1_scan_end': "MZML MS1 scan window upper limit", 
         'ms1_retention_time': "MZML MS1 retention time", 
@@ -43,11 +43,12 @@ def meta_merge(mzml_meta_filename, msalign_meta_filename, output_file):
         })
     
     meta_df2 = pd.read_csv(msalign_meta_filename, sep='\t')
+    meta_df2 = meta_df2.drop(columns=['feature_id','precursor_intensity'], errors='ignore')
     meta_df2 = meta_df2.rename(columns={
         'FILE_NAME': 'MZML file name',
         'DATASET_ID': 'DATASET ID',
         'MS_ONE_ID': 'MSALIGN MS1 ID',
-        'MS_ONE_SCAN': 'MSALIGN MS1 scan',
+        'MS_ONE_SCAN': 'MZML MS1 scan',
         'MSALIGN_FILE_NAME': 'MSALIGN file name',
         'MS2_SCANS': 'MZML MS2 scan',
         'SPECTRUM_ID': 'MSALIGN MS2 ID', 
@@ -58,7 +59,11 @@ def meta_merge(mzml_meta_filename, msalign_meta_filename, output_file):
         'PRECURSOR_CHARGE': 'MSALIGN precursor charge',
         'PRECURSOR_MASS': 'MSALIGN precursor monoisotopic mass',
         'PRECURSOR_INTENSITY': 'MSALIGN precursor intensity',
-        'PRECURSOR_FEATURE_ID': 'MSALIGN feature ID'
+        'PRECURSOR_FEATURE_ID': 'MSALIGN feature ID',
+        'MSALIGN_number_of_fragment_ions': 'MSALIGN number of fragment ions',
+        'feature_intensity': 'MSALIGN feature intensity',
+        'feature_score': 'MSALIGN feature score',
+        'feature_apex_time': 'MSALIGN feature apex time'
     })
 
     merged_meta_df = meta_df1.merge(

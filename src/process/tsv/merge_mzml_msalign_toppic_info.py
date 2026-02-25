@@ -6,7 +6,7 @@ import sys
 def rename_cols_orders(df):     
     # Reorder 
     cols = [
-            "DATASET ID", "MZML file name", "MZML instrument", "mzML MS1 scan", 
+            "DATASET ID", "MZML file name", "MZML instrument", "MZML MS1 scan", 
             "MZML MS1 scan window lower limit", "MZML MS1 scan window upper limit", "MZML MS1 retention time",
             "MZML MS1 total ion current", "MZML MS1 mass resolving power", "MZML MS1 ion injection time",
             "MZML MS1 lowest observed mz", "MZML MS1 highest observed mz",
@@ -61,7 +61,7 @@ def info_merge(top_filename, mzml_meta_filename, output_file, header_str=None):
     output_file: file name of the output in tsv format 
     """
     top_df = pd.read_csv(top_filename, sep='\t',low_memory=False, dtype=str)
-    top_df = top_df.drop(columns=['Spectrum ID', 'Charge', 'Precursor mass', 'Fragmentation', 'Feature ID', 'Retention time'])
+    top_df = top_df.drop(columns=['Spectrum ID', 'Charge', 'Precursor mass', 'Fragmentation', 'Feature ID', 'Retention time', '#peaks','Feature intensity','Feature score', 'Feature apex time'], errors='ignore')
     top_df["Data file name"] = top_df["Data file name"].apply(os.path.basename)
 
     # Split Proteoform into three parts on first and last "."
@@ -107,16 +107,10 @@ def info_merge(top_filename, mzml_meta_filename, output_file, header_str=None):
         'Proteoform': "TOPPIC proteoform", 
         'Previous residue': "TOPPIC previous residue", 
         'Next residue': "TOPPIC next residue",
-        '#peaks': "MSALIGN number of fragment ions",
-        'Feature intensity': "MSALIGN feature intensity",
-        'Feature score': "MSALIGN feature score", 
-        'Feature apex time': "MSALIGN feature apex time"
        })
-    #print(top_df.columns)  
     
     meta_df = pd.read_csv(mzml_meta_filename, sep='\t', dtype=str)
     meta_df = meta_df.drop(columns=['title'])
-    #print(meta_df.columns)
     
     # merge: keep all metadata rows, even if no match in TopPIC
     top_df_merged = meta_df.merge(

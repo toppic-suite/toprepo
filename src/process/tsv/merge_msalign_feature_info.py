@@ -15,6 +15,7 @@ def feature_merge(msalign_file, feature_file, out_filename):
     rename_map = {
             "File_name": "FILE_NAME",
             "Scans": "MS2_SCANS",
+            "DATASET_id": "DATASET_ID"
         }
     feature_df = feature_df.rename(columns=rename_map)
 
