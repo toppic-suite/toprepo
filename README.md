@@ -154,7 +154,8 @@ python3 toprepo/src/process/msalign_anno/msalign_anno.py --msalign spectra_prsm_
 We use an example mzML file spectra.mzML and its corresponding annotated msalign file spectra_anno_ms2.msalign to explain the method.
 
 **3.1 Convert matched mzML files to MGF file**  
-The Python script convert_mzml_mgf.py converts matched mzML files into MGF format. Two modes are supported: 1) Standard MGF; 2) Extended MGF (including additional fields such as collision energy, scan limits, total ion current, etc).
+
+The Python script convert_mzml_mgf.py converts mzML files into mgf files. 
 
 * Usage python3 convert_mzml_to_mgf.py <input_mzml_filename> <output_mgf_filename>
 
@@ -171,6 +172,7 @@ python3 toprepo/src/process/mgf/mgf_add_dataset_id.py spectra_ms2.mgf PXD029703 
 ```
 
 **3.3 Annotation**
+
 The Python script mgf_anno_multi_thread.py annotates MGF files by matching experimental centroid peaks to theoretical fragment peaks and theoretical ions.
 
 * Usage: python3 mgf_anno_file.py --theo_file <theo_file> --mgf_file <input_mgf_file> --msalign_file <input_msalign_file> --out <output_annotated mgf_file> 
