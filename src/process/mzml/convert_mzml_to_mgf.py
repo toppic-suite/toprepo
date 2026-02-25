@@ -88,7 +88,7 @@ def extend_mgf_write_with_ms1(spectrum2, mzml_filename, mgf_filename):
     with open(mgf_filename, 'w') as out:
         for spec in spectrum2:
             out.write("BEGIN IONS\n")
-            out.write(f"MZML_FILE_NAME={mzml_filename}\n")
+            out.write(f"MZML_FILE_NAME={os.path.basename(mzml_filename)}\n")
             out.write(f"SCAN={spec['ms2_scan_id']}\n")
             if "title" in spec:
                 out.write(f"TITLE={spec['title']}\n")

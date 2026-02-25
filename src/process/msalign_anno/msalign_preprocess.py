@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import argparse
 import sys
-
+import os
 
 def main():
     parser = argparse.ArgumentParser(
@@ -21,7 +21,7 @@ def main():
                 if line.startswith("FILE_NAME="):
                     line = "MZML_" + line
                     fout.write(line)
-                    fout.write(f"MSALIGN_FILE_NAME={args.msalign_file}\n")
+                    fout.write(f"MSALIGN_FILE_NAME={os.path.basename(args.msalign_file)}\n")
                 elif line.startswith("SPECTRUM_ID="):
                     parts = line.strip().split("=", 1)
                     if len(parts) == 2:
