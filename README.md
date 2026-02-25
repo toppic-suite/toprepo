@@ -127,6 +127,7 @@ python3 toprepo/src/process/tsv/merge_mzml_msalign_toppic_info.py spectra_toppic
 We use an msalign file spectra_ms2.msalign with dataset id PXD029703 and its spectral information file spectra_mzml_msalign_feature_toppic_info.tsv to explain the method.
 
 **2.1 Preprocess msalign file**
+
 This step adds dataset id information to each scan in the msalign file and updates the spectral information in the msalign file.
 
 ```
@@ -134,12 +135,14 @@ python3 toprepo/src/process/msalign_anno/msalign_preprocess.py spectra_ms2.msali
 ```
 
 **2.2 Add PrSM identification information to msalign file**
+
 This step adds spectral identification information to the msalign file. 
 ```
 python3 toprepo/src/process/msalign_anno/merge_msalign_prsm.py --tsv spectra_mzml_msalign_feature_toppic_info.tsv --msalign spectra_preprocess_ms2.msalign --out spectra_prsm_ms2.msalign
 ```
 
 **2.3 Annotate msalign file** 
+
 This step adds annotations to the msalign file.  
 ```
 python3 toprepo/src/process/msalign_anno/msalign_anno.py --msalign spectra_prsm_ms2.msalign --out spectra_anno_ms2.msalign
