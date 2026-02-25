@@ -173,7 +173,7 @@ python3 toprepo/src/process/mgf/mgf_add_dataset_id.py spectra_ms2.mgf PXD029703 
 
 **3.3 Annotation**
 
-The Python script mgf_anno_multi_thread.py annotates mgf files by matching experimental centroid peaks to theoretical fragment peaks and theoretical ions.
+The Python script mgf_anno_file.py annotates mgf files by matching experimental centroid peaks to theoretical fragment peaks and theoretical ions.
 
 * Usage: python3 mgf_anno_file.py --theo_file <theo_file> --mgf_file <input_mgf_file> --msalign_file <input_msalign_file> --out <output_annotated mgf_file> 
 
