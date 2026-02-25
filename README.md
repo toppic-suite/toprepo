@@ -73,9 +73,9 @@ Run the command:
 python3 toprepo/src/process/prsm/prsm_preprocess.py spectra_ms2_toppic_prsm_single.tsv PXD029703 --output spectra_toppic_info.tsv
 ```
 
-**1.5 Merge the spectral and feature information**
+**1.5 Merge msalign spectral and feature information**
 
-This step merges the spectral and feature information into a single TSV file.
+This step merges msalign spectral and feature information into a single TSV file.
 
 * Usage python3 merge_msalign_feature_info.py <msalign_info_filename> <feature_info_filename> <output_tsv_filename>
 
@@ -89,7 +89,7 @@ Run the command:
 python3 toprepo/src/process/tsv/merge_msalign_feature_info.py spectra_msalign_info.tsv spectra_feature_info.tsv spectra_msalign_feature_info.tsv
 ```
 
-**1.6 Merge the spectral information extracted from mzML, msalign, and feature files**
+**1.6 Merge spectral information extracted from mzML, msalign, and feature files**
 
 This step merges the spectral information extracted from mzML, msalign, and feature files into a single TSV file.
 
