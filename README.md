@@ -153,7 +153,7 @@ python3 toprepo/src/process/msalign_anno/msalign_anno.py --msalign spectra_prsm_
 
 We use an example mzML file spectra.mzML and its corresponding annotated msalign file spectra_anno_ms2.msalign to explain the method.
 
-**3.1 Convert matched mzML files to MGF file**  
+**3.1 Convert matched mzML files to mgf file**  
 
 The Python script convert_mzml_mgf.py converts mzML files into mgf files. 
 
@@ -165,7 +165,7 @@ Run the command:
 python3 toprepo/src/process/mzml/convert_mzml_to_mgf.py spectra.mzML spectra_ms2.mgf 
 ```
 
-**3.2 Add dataset id to MGF file**  
+**3.2 Add dataset id to mgf file**  
 
 ```
 python3 toprepo/src/process/mgf/mgf_add_dataset_id.py spectra_ms2.mgf PXD029703 spectra_dataset_id_ms2.mgf
@@ -173,13 +173,13 @@ python3 toprepo/src/process/mgf/mgf_add_dataset_id.py spectra_ms2.mgf PXD029703 
 
 **3.3 Annotation**
 
-The Python script mgf_anno_multi_thread.py annotates MGF files by matching experimental centroid peaks to theoretical fragment peaks and theoretical ions.
+The Python script mgf_anno_multi_thread.py annotates mgf files by matching experimental centroid peaks to theoretical fragment peaks and theoretical ions.
 
 * Usage: python3 mgf_anno_file.py --theo_file <theo_file> --mgf_file <input_mgf_file> --msalign_file <input_msalign_file> --out <output_annotated mgf_file> 
 
 Input:
 * A theoretical_envelope_file: A txt file containing theoretical isotope envelope distributions. "toprepo/resources/theo_patt.txt".
-* An MGF file: ```spectra_ms2.mgf``` 
+* An mgf file: ```spectra_ms2.mgf``` 
 * An annotated msalign file: ```spectra_anno_ms2.msalign```
 
 Output:
