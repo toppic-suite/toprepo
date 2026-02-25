@@ -18,7 +18,7 @@ python3 extract_mzml_info.py <dataset_id> <input_mzml_filename> <output_tsv_file
 * Input:
    * dataset_id: MS dataset ID
    * input_mzml_filename: Input mzML filename
-   * output_tsv_filename: Output TSV filename for storing extracted spectral information from mzML
+   * output_tsv_filename: Output TSV filename for storing spectral information extracted from mzML
 
 Run the command: 
 ```
