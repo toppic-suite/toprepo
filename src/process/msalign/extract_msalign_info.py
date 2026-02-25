@@ -7,7 +7,7 @@ import pandas as pd
 def msalign_meta_extract(dataset_id, msalign_path):
     records = []
     current = None
-    records = []
+    peak_count = 0
 
     with open(msalign_path, 'r') as f:
         # current = {}
