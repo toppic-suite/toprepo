@@ -124,10 +124,10 @@ python3 toprepo/src/process/tsv/merge_mzml_msalign_toppic_info.py spectra_toppic
 
 ## 2. Generate annotated msalign files 
 
-We use an msalign file spectra_ms2.msalign from MS dataset id PXD029703 and its spectral information file spectra_mzml_msalign_feature_toppic_info.tsv to explain the method.
+We use an msalign file spectra_ms2.msalign with dataset id PXD029703 and its spectral information file spectra_mzml_msalign_feature_toppic_info.tsv to explain the method.
 
 **2.1 Preprocess msalign file**
-This step adds dataset id information to each scan in the msalign file and updates the spectral information based on the msalign file format.
+This step adds dataset id information to each scan in the msalign file and updates the spectral information in the msalign file.
 
 ```
 python3 toprepo/src/process/msalign_anno/msalign_preprocess.py spectra_ms2.msalign PXD029703 spectra_preprocess_ms2.msalign
