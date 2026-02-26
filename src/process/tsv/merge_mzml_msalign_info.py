@@ -4,13 +4,13 @@ import sys
 import pandas as pd
 
 
-def meta_merge(mzml_meta_filename, msalign_meta_filename, output_file):
+def meta_merge(mzml_meta_filename, msalign_meta_filename, output_file=None, wfile=False):
     """
     mzml_meta_filename: meta extracted from mzml file in tsv, 
     msalign_meta_filename: meta extracted from msalign file in tsv
     output_file: file name of the output in tsv format 
     """
-    meta_df1 = pd.read_csv(mzml_meta_filename, sep='\t',low_memory=False)
+    meta_df1 = pd.read_csv(mzml_meta_filename, sep='\t',low_memory=False, dtype=str)
     meta_df1 = meta_df1.rename(columns={
         'dataset_id': "DATASET ID",
         'instrument': "MZML instrument",
@@ -42,7 +42,11 @@ def meta_merge(mzml_meta_filename, msalign_meta_filename, output_file):
         'ms1_highest_obsevered_mz': "MZML MS1 highest observed mz"
         })
     
-    meta_df2 = pd.read_csv(msalign_meta_filename, sep='\t')
+    if isinstance(msalign_meta_filename, pd.DataFrame):
+        meta_df2 = msalign_meta_filename
+    else:
+        meta_df2 = pd.read_csv(msalign_meta_filename, sep='\t', dtype=str)
+
     meta_df2 = meta_df2.drop(columns=['feature_id','precursor_intensity'], errors='ignore')
     meta_df2 = meta_df2.rename(columns={
         'FILE_NAME': 'MZML file name',
@@ -74,9 +78,11 @@ def meta_merge(mzml_meta_filename, msalign_meta_filename, output_file):
     )
 
     # Save merged file
-    merged_meta_df.to_csv(output_file, sep='\t', index=False)
-    print(f"Merged file saved to: {output_file}")
+    if wfile and out_filename: 
+        merged_meta_df.to_csv(output_file, sep='\t', index=False)
+        print(f"Merged file saved to: {output_file}")
     print(f"Total rows: {len(merged_meta_df)}")
+    return merged_meta_df
     
 
 if __name__ == "__main__":
@@ -86,4 +92,4 @@ if __name__ == "__main__":
         mzml_info_tsv = sys.argv[1]
         msalign_info_tsv = sys.argv[2]
         out_filename = sys.argv[3]
-        meta_merge(mzml_info_tsv, msalign_info_tsv, out_filename)
+        merged_meta_df = meta_merge(mzml_info_tsv, msalign_info_tsv, out_filename, wfile=True)

@@ -1,6 +1,8 @@
 import os
 import pandas as pd
 import sys
+import merge_msalign_feature_info as mf
+import merge_mzml_msalign_info as mm
 
 
 def rename_cols_orders(df):     
@@ -54,10 +56,12 @@ def rename_cols_with_header_str(df, header_str):
     return df.rename(columns=dict(zip(old_cols, new_cols)))
 
 
-def info_merge(top_filename, mzml_meta_filename, output_file, header_str=None):
+def info_merge(mzml_meta_filename, msalign_meta_filename, feature_meta_filename, top_filename, output_file, header_str=None):
     """
-    top_filename: toppic output tsv file, 
     mzml_meta_filename: extracted metadata from mzml file
+    msalign_meta_filename: extracted meta info from msalign file
+    feature_meta_filename: extracted meta info from feature file 
+    top_filename: toppic output tsv file, 
     output_file: file name of the output in tsv format 
     """
     top_df = pd.read_csv(top_filename, sep='\t',low_memory=False, dtype=str)
@@ -107,11 +111,22 @@ def info_merge(top_filename, mzml_meta_filename, output_file, header_str=None):
         'Proteoform': "TOPPIC proteoform", 
         'Previous residue': "TOPPIC previous residue", 
         'Next residue': "TOPPIC next residue",
+        # 'Feature intensity': "MSALIGN feature intensity",
+        # 'Feature score': "MSALIGN feature score", 
+        # 'Feature apex time': "MSALIGN feature apex time"
        })
-    
-    meta_df = pd.read_csv(mzml_meta_filename, sep='\t', dtype=str)
-    meta_df = meta_df.drop(columns=['title'])
-    
+    # merge msalign + feature file
+    ms2_feature_df = mf.feature_merge(msalign_meta_filename, feature_meta_filename, out_filename=None, wfile=False)
+
+    # merge mzml + msalign + feature file
+    meta_df = mm.meta_merge(mzml_meta_filename, ms2_feature_df, output_file=None, wfile=False)
+    meta_df = meta_df.drop(columns=['title'], errors='ignore')
+
+    meta_df["MSALIGN file name"] = meta_df["MSALIGN file name"].astype(str)
+    meta_df["MZML MS2 scan"] = meta_df["MZML MS2 scan"].astype(str)
+    meta_df["DATASET ID"] = meta_df["DATASET ID"].astype(str)
+
+    # merge mzml + msalign + feature + toppic 
     # merge: keep all metadata rows, even if no match in TopPIC
     top_df_merged = meta_df.merge(
         top_df,
@@ -125,20 +140,31 @@ def info_merge(top_filename, mzml_meta_filename, output_file, header_str=None):
     if header_str is not None:
         top_df_merged = rename_cols_with_header_str(top_df_merged, header_str)
     # Save merged file
+    id_cols = [
+        "TOPPIC_first_residue_position",
+        "TOPPIC_last_residue_position"
+    ]
+    for c in id_cols:
+        if c in top_df_merged.columns:
+            top_df_merged[c] = top_df_merged[c].fillna("").astype(str)
+
     top_df_merged.to_csv(output_file, sep='\t', index=False)
     print(f"Merged file saved to: {output_file}")
     print(f"Total rows: {len(top_df_merged)}, matched: {top_df_merged['TOPPIC_proteoform_id'].notna().sum()}")
     
 
 if __name__ == "__main__":
-    if len(sys.argv) != 4:
-        print("Usage: python script.py <toppic_info_filename> <mzml_msalign_info_filename> <output_tsv_filename>")
+    if len(sys.argv) != 6:
+        print("Usage: python script.py <mzml_info_filename> <msalign_info_filename> <feature_info_filename> <toppic_info_filename> <output_tsv_filename>")
     else:
-        toppic_info_filename = sys.argv[1]
-        mzml_msalign_info_filename = sys.argv[2]
-        out_filename = sys.argv[3]
+        mzml_info_filename = sys.argv[1]
+        msalign_info_filename = sys.argv[2]
+        feature_info_filename = sys.argv[3]
+        toppic_info_filename = sys.argv[4]
+        out_filename = sys.argv[5]
+
         header_str ="DATASET_id	MZML_file_name	MZML_instrument	MZML_ms1_scan	MZML_ms1_scan_window_lower_limit	MZML_ms1_scan_window_upper_limit	MZML_ms1_retention_time	MZML_ms1_total_ion_current	MZML_ms1_mass_resolving_power	MZML_ms1_ion_injection_time	MZML_ms1_lowest_observed_mz	MZML_ms1_highest_observed_mz	MZML_ms2_scan	MZML_ms2_scan_window_lower_limit	MZML_ms2_scan_window_upper_limit	MZML_ms2_retention_time	MZML_ms2_total_ion_current	MZML_ms2_mass_resolving_power	MZML_ms2_ion_injection_time	MZML_ms2_lowest_observed_mz	MZML_ms2_highest_observed_mz	MZML_isolation_window_target_mz	MZML_isolation_window_lower_offset	MZML_isolation_window_upper_offset	MZML_selected_ion_mz	MZML_selected_ion_peak_intensity	MZML_selected_ion_charge	MZML_activation	MZML_collision_energy	MSALIGN_file_name	MSALIGN_ms1_id	MSALIGN_ms2_id	MSALIGN_precursor_charge	MSALIGN_precursor_monoisotopic_mass	MSALIGN_precursor_intensity	MSALIGN_feature_id	MSALIGN_feature_intensity	MSALIGN_feature_score	MSALIGN_feature_apex_time	MSALIGN_number_of_fragment_ions	TOPPIC_prsm_id	TOPPIC_adjusted_precursor_mass	TOPPIC_proteoform_id	TOPPIC_proteoform_intensity	TOPPIC_number_of_protein_hits	TOPPIC_protein_accession	TOPPIC_protein_description	TOPPIC_first_residue_position	TOPPIC_last_residue_position	TOPPIC_special_amino_acids	TOPPIC_database_sequence	TOPPIC_proteoform_mass	TOPPIC_protein_n-terminal_form	TOPPIC_fixed_modifications	TOPPIC_number_of_unexpected_modifications	TOPPIC_unexpected_modifications	TOPPIC_number_of_variable_modifications	TOPPIC_variable_modifications	TOPPIC_miscore	TOPPIC_number_of_matched_experimental_fragment_ions	TOPPIC_number_of_matched_theoretical_fragment_masses	TOPPIC_e-value	TOPPIC_spectrum-level_q-value	TOPPIC_proteoform-level_q-value	TOPPIC_proteoform	TOPPIC_previous_residue	TOPPIC_next_residue"
-        info_merge(toppic_info_filename, mzml_msalign_info_filename, out_filename, header_str)
+        info_merge(mzml_info_filename, msalign_info_filename, feature_info_filename, toppic_info_filename, out_filename, header_str)
         
         
         
