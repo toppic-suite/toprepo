@@ -72,15 +72,7 @@ def mzML_ms_extract_with_ms1(mzml_filename):
                         'ms1_mz_array': last_ms1['ms1_mz_array'],
                         'ms1_intensity_array': last_ms1['ms1_intensity_array']
                     })
-    return result
-
-    
-def mgf_write(mzml_spectrum, mgf_filename):
-    # write it to a mgf file
-    with open(mgf_filename, 'w') as out:
-        for spec in mzml_spectrum:
-            mgf.write([spec], out)
-            
+    return result          
 
 
 def extend_mgf_write_with_ms1(spectrum2, mzml_filename, mgf_filename):
@@ -132,19 +124,12 @@ def extend_mgf_write_with_ms1(spectrum2, mzml_filename, mgf_filename):
 
 
 if __name__ == "__main__":
-    if len(sys.argv) <3:
-        print("Usage: python script.py <input_mzml_filename> <output_mgf_filename> <mgf_format>")
+    if len(sys.argv) !=3:
+        print("Usage: python script.py <input_mzml_filename> <output_mgf_filename>")
         sys.exit()
     else:
         mzml_filename = sys.argv[1] # input the mzML files folder 
         mgf_filename = sys.argv[2]
-        if len(sys.argv)==4:
-            convert_method = sys.argv[3]
-        else:
-            convert_method = "extended"
         print(f"converting: {mzml_filename}")
         mzml_spectrum = mzML_ms_extract_with_ms1(mzml_filename)  
-        if convert_method == "standard":
-            mgf_write(mzml_spectrum, mgf_filename)
-        else:
-            extend_mgf_write_with_ms1(mzml_spectrum, mzml_filename, mgf_filename)
+        extend_mgf_write_with_ms1(mzml_spectrum, mzml_filename, mgf_filename)
