@@ -58,7 +58,7 @@ def msalign_meta_extract(dataset_id, msalign_path):
     return records    
 
 
-def process_msalign_folder(dataset_id: str, msalign_filename: str, output_filename: str):
+def process_msalign_file(dataset_id: str, msalign_filename: str, output_filename: str):
     print(f"Extracting metadata from: {msalign_filename} ({dataset_id})")
         
         
@@ -79,4 +79,4 @@ if __name__ == "__main__":
     dataset_id = sys.argv[1]
     input_filename = sys.argv[2]
     output_tsv_filename = sys.argv[3]
-    process_msalign_folder(dataset_id, input_filename, output_tsv_filename)
+    process_msalign_file(dataset_id, input_filename, output_tsv_filename)
