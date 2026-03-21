@@ -69,17 +69,21 @@ def info_merge(mzml_meta_filename, msalign_meta_filename, feature_meta_filename,
     top_df["Data file name"] = top_df["Data file name"].apply(os.path.basename)
 
     # Split Proteoform into three parts on first and last "."
-    parts = top_df["Proteoform"].str.split(".", n=1, expand=True)
-    prev_residue = parts[0]
-    rest = parts[1].str.rsplit(".", n=1, expand=True)
-    proteoform_seq = rest[0]
-    next_residue = rest[1]
-
     # Insert new columns, replacing original Proteoform
     col_idx = top_df.columns.get_loc("Proteoform")
-    top_df.insert(col_idx, "Previous residue", prev_residue)
-    top_df["Proteoform"] = proteoform_seq
-    top_df.insert(col_idx + 2, "Next residue", next_residue)
+
+    if top_df.shape[0] > 0: 
+        parts = top_df["Proteoform"].str.split(".", n=1, expand=True)
+        prev_residue = parts[0]
+        rest = parts[1].str.rsplit(".", n=1, expand=True)
+        proteoform_seq = rest[0]
+        next_residue = rest[1]
+        top_df["Proteoform"] = proteoform_seq
+        top_df.insert(col_idx, "Previous residue", prev_residue)
+        top_df.insert(col_idx + 2, "Next residue", next_residue)
+    else:
+        top_df.insert(col_idx, "Previous residue", "")
+        top_df.insert(col_idx + 2, "Next residue", "")
     #print(top_df.columns)  
     top_df = top_df.rename(columns={
         'Data file name': "MSALIGN file name",
