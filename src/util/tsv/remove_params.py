@@ -7,8 +7,10 @@ def remove_blocks(input_file, output_file):
 
     result = []
     skip = False
+    delimiter_count = 0
     for line in lines:
-        if "**********" in line:
+        if "**********" in line and delimiter_count < 2:
+            delimiter_count += 1
             skip = not skip
             continue
         if not skip:
