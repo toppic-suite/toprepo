@@ -8,7 +8,7 @@ def remove_blocks(input_file, output_file):
     result = []
     skip = False
     for line in lines:
-        if "***" in line:
+        if "**********" in line:
             skip = not skip
             continue
         if not skip:
