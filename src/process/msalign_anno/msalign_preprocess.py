@@ -12,16 +12,25 @@ def main():
     parser.add_argument("output_file", help="Output msalign file")
     args = parser.parse_args()
 
+    dataset_id = args.dataset_id
+    msalign_basename = os.path.basename(args.msalign_file)
+    if msalign_basename.startswith(dataset_id +"_"):
+        msalign_basename = msalign_basename[len(dataset_id) + 1:]
+
     with open(args.msalign_file, "r") as fin, open(args.output_file, "w") as fout:
         for line in fin:
+            if line.startswith("#") or line.strip() == "":
+                continue
             if line.strip() == "BEGIN IONS":
                 fout.write(line)
-                fout.write(f"DATASET_ID={args.dataset_id}\n")
+                fout.write(f"DATASET_ID={dataset_id}\n")
             elif line.find("=") != -1:
                 if line.startswith("FILE_NAME="):
                     line = "MZML_" + line
+                    parts = line.strip().split("=", 1)
+                    line = parts[0] + "=" + os.path.basename(parts[1]) + "\n"
                     fout.write(line)
-                    fout.write(f"MSALIGN_FILE_NAME={os.path.basename(args.msalign_file)}\n")
+                    fout.write(f"MSALIGN_FILE_NAME={msalign_basename}\n")
                 elif line.startswith("SPECTRUM_ID="):
                     parts = line.strip().split("=", 1)
                     if len(parts) == 2:
