@@ -66,29 +66,16 @@ def generalize_ion(ion):
         return ion_type + suffix
     return ion
 
-
-def load_annotation_tables(excel_path):
-    sheets = pd.read_excel(excel_path, sheet_name=None)
-
+def load_annotation_tables(tsv_path):
+    anno_df = pd.read_csv(tsv_path, sep='\t')
+    act_types = anno_df['activation'].unique()
     label_freq_dict = {}
-    for sheet_name, df in sheets.items():
-        key = sheet_name.lower()  
-        label_freq_dict[key] = dict(zip(df["label"], df["frequency"]))
+    for act in act_types:
+        key = act.lower()
+        df = anno_df[anno_df['activation']==act]
+        label_freq_dict[key] = dict(zip(df["label"], df["count"]))
 
     return label_freq_dict
-
-
-def get_table_key(activation, terminus):
-    return f"{activation.lower()}_{terminus.lower()}_anno_table"
-
-
-def get_ion_type(ion_label):
-    if ion_label.startswith("z_dot"):
-        return "z_dot"
-
-    ion_type = ion_label.split('-')[0][0]  # b/y/z/a etc.
-    return ion_type
-
 
 def ion_mode_selection(ion_mode, losses):
     ion_mode = ion_mode.lower()
@@ -157,21 +144,12 @@ def match_all_annotations(exp_mass_table, theo_mass_table, seq, activation,
                     ion_label = theo2['ion'] # e.g. y12-H2O-1
                     ion_gen_label = generalize_ion(ion_label)  # y-H2O-1
                     
-                    # Determine terminus
-                    ion_type = get_ion_type(ion_label)
-                   
-                    if ion_type in ['a', 'b', 'c']:
-                        terminus = 'n'
-                    else:
-                        terminus = 'c' 
-                  
-                    table_key = get_table_key(activation, terminus)
                     # Skip if no table
-                    if table_key not in label_freq_dict:
+                    if activation.lower() not in label_freq_dict:
                         k += 1
                         continue
-
-                    freq_dict = label_freq_dict[table_key]
+                    
+                    freq_dict = label_freq_dict[activation.lower()]
                     # only keep if label exists
                     if ion_gen_label not in freq_dict:
                         k += 1
@@ -440,8 +418,8 @@ if __name__ == "__main__":
         "--out", required=True, type=str, default="annot.msalign",
         help="Output annotated msalign filename (default: ms2_spectra_annot.msalign)")
     parser.add_argument(
-        "--table", required=True, type=str, default="anno_combined_table.xlsx",
-        help="An excel filename containing ion type and frequency")
+        "--table", required=True, type=str, default="combine_anno_table.tsv",
+        help="A TSV filename containing ion type and frequency")
     parser.add_argument(
         "--ion_type", required=False, type=str, choices = ['basic', 'all'], help="Ion type (basic/all)", default='basic')
     parser.add_argument(
