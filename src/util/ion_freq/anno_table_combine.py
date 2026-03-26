@@ -19,7 +19,7 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description="combine four type of activation TSV tables into a TSV file.")
     parser.add_argument("--input", required=True, help="Input folder containing TSV files")
-    parser.add_argument("--output", required=True, help="Output TSV file path", default="combine_anno_table.tsv")
+    parser.add_argument("--output", help="Output TSV file path", default="combine_anno_table.tsv")
 
     args = parser.parse_args()
     combine_tsv_tables(args.input, args.output)
