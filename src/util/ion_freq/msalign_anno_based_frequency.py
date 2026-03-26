@@ -69,13 +69,16 @@ def generalize_ion(ion):
 def load_annotation_tables(tsv_path):
     anno_df = pd.read_csv(tsv_path, sep='\t')
     act_types = anno_df['activation'].unique()
-    label_freq_dict = {}
+    label_dict = {}
     for act in act_types:
         key = act.lower()
-        df = anno_df[anno_df['activation']==act]
-        label_freq_dict[key] = dict(zip(df["label"], df["count"]))
+        df = anno_df[anno_df['activation'] == act]
+        label_dict[key] = {
+            label: (count, coverage)
+            for label, count, coverage in zip(df["label"], df["count"], df["coverage"])
+        }
 
-    return label_freq_dict
+    return label_dict
 
 def ion_mode_selection(ion_mode, losses):
     ion_mode = ion_mode.lower()
@@ -96,7 +99,7 @@ def ion_mode_selection(ion_mode, losses):
 
 
 def match_all_annotations(exp_mass_table, theo_mass_table, seq, activation,
-                          label_freq_dict, ppm_tol=20.0, da_tol=0.01):
+                          label_freq_dict, cov_rate, ppm_tol=20.0, da_tol=0.01):
 
     anno_peak_lines = []
     bond_num = len(seq) - 1
@@ -157,13 +160,13 @@ def match_all_annotations(exp_mass_table, theo_mass_table, seq, activation,
                     
                     matches.append({
                         'ion': ion_label,
-                        # 'theo_mass': theo2['mass'],
                         'aa_num': theo2['aa_num'],
                         'pos': theo2['pos'],
                         'shift': theo2['shift'],
                         'delta_da': delta_da,
                         'delta_ppm': delta_ppm,
-                        'freq': freq_dict[ion_gen_label]
+                        'freq': freq_dict[ion_gen_label][0],
+                        'rate': float(freq_dict[ion_gen_label][1].rstrip('%'))
                     })
 
                     k += 1
@@ -173,21 +176,22 @@ def match_all_annotations(exp_mass_table, theo_mass_table, seq, activation,
             base_cols = exp['cols']
 
             if matches:
-
                 # pick highest frequency annotation
                 best = max(matches, key=lambda x: x['freq'])
-                coverage[best['pos'] - 1] = True
-                flat = [
-                    best['ion'],
-                    str(best['aa_num']),
-                    str(best['pos']),
-                    str(best['shift']),
-                    f"{best['delta_da']:.4f}",
-                    f"{best['delta_ppm']:.2f}"
-                ]
-
-                line_out = "\t".join(base_cols + flat)
-
+                if best['rate'] >= cov_rate:
+                    coverage[best['pos'] - 1] = True
+                    flat = [
+                        best['ion'],
+                        str(best['aa_num']),
+                        str(best['pos']),
+                        str(best['shift']),
+                        f"{best['delta_da']:.4f}",
+                        f"{best['delta_ppm']:.2f}"
+                    ]
+    
+                    line_out = "\t".join(base_cols + flat)
+                else:
+                    line_out = "\t".join(base_cols)
             else:            
                 line_out = "\t".join(base_cols)
 
@@ -341,7 +345,7 @@ def parse_proteoform(spectrum_meta):
     return n_term_acetyl, fixed_mod_list, unexpected_mod_list
         
 
-def annot_one_spectrum(spectrum, label_freq_dict, activation_ions=None, ppm_tol=20.0, da_tol=0.01):
+def annot_one_spectrum(spectrum, label_freq_dict, cov_rate, activation_ions=None, ppm_tol=20.0, da_tol=0.01):
     seq = spectrum["meta"].get("DATABASE_SEQUENCE", None)
     if seq in (None, ""):
         spectrum["meta_lines"].append("SEQUENCE_COVERAGE=")
@@ -369,20 +373,20 @@ def annot_one_spectrum(spectrum, label_freq_dict, activation_ions=None, ppm_tol=
     theo_mass_table = build_mass_table(seq, selected_ions = selected_ions, 
                                        n_term_acetyl=n_term_acetyl, fixed_mod_list=fixed_mod_list, 
                                        unexpected_mod_list=unexpected_mod_list) 
-    annot_peak_lines, covered_bonds = match_all_annotations(exp_mass_table, theo_mass_table, seq, activation, label_freq_dict, ppm_tol=ppm_tol, da_tol=da_tol)      
+    annot_peak_lines, covered_bonds = match_all_annotations(exp_mass_table, theo_mass_table, seq, activation, label_freq_dict, cov_rate, ppm_tol=ppm_tol, da_tol=da_tol)      
     spectrum["meta_lines"].append(f"SEQUENCE_COVERAGE={covered_bonds}")
     spectrum["peak_lines"] = annot_peak_lines
     return spectrum
 
 # ---------- WRITE ANNOTATED MSALIGN WITH MULTIPROCESSING ----------
-def annot_msalign(input_msalign, label_freq_dict, output_file, activation_ions, ppm_tol=20.0, da_tol=0.01):
+def annot_msalign(input_msalign, label_freq_dict, cov_rate, output_file, activation_ions, ppm_tol=20.0, da_tol=0.01):
     ms_reader = msalign_reader.MsalignReader(input_msalign)
     ms_writer = msalign_writer.MsalignWriter(output_file)
     
     count = 0
     start_time = time.time()
     for spectrum in ms_reader.readmsalign_iter():
-        spectrum = annot_one_spectrum(spectrum, label_freq_dict, activation_ions=activation_ions, ppm_tol=ppm_tol, da_tol=da_tol)
+        spectrum = annot_one_spectrum(spectrum, label_freq_dict, cov_rate, activation_ions=activation_ions, ppm_tol=ppm_tol, da_tol=da_tol)
         ms_writer.write(spectrum)
         count += 1
         if count % 1000 == 0:
@@ -421,12 +425,13 @@ if __name__ == "__main__":
         "--table", required=True, type=str, default="combine_anno_table.tsv",
         help="A TSV filename containing ion type and frequency")
     parser.add_argument(
-        "--ion_type", required=False, type=str, choices = ['basic', 'all'], help="Ion type (basic/all)", default='basic')
+        "--ion_type", required=False, type=str, choices = ['basic', 'all'], help="Ion type (basic/all)", default='all')
     parser.add_argument(
         "--neutral_loss", required=False, action='store_true', help="Include ion neutral losses (e.g., -H2O, -NH3)")
     parser.add_argument(
         "--error_tol", required=False, type=float, help="Error tolerance in ppm", default=20.0)
     parser.add_argument("--da_tol", required=False, type=float, help="Error tolerance in Da", default=0.01)
+    parser.add_argument("--rate", required=False, type=float, help="Coverage rate (between 0-0.2)", default=0.0)
 
     args = parser.parse_args()
     output_filename = args.out or "ms2_spectra_annot.msalign"
@@ -435,7 +440,8 @@ if __name__ == "__main__":
     ion_mode, selected_losses = ion_mode_selection(args.ion_type, args.neutral_loss)
     ppm_tol = args.error_tol
     da_tol = args.da_tol
-
+    cov_rate = float(args.rate)*100
+    
     label_freq_dict = load_annotation_tables(args.table)
     # Prepare ion types for each activation method
     activation_ions = {}
@@ -445,4 +451,4 @@ if __name__ == "__main__":
         # if activation == 'hcd':
             # print(f"Annotating spectra with activation method: {activation_ions[activation]}")
 
-    annot_msalign(args.msalign, label_freq_dict, output_filename, activation_ions, ppm_tol, da_tol)    
+    annot_msalign(args.msalign, label_freq_dict, cov_rate, output_filename, activation_ions, ppm_tol, da_tol)    

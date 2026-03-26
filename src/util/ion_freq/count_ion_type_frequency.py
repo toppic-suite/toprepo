@@ -41,7 +41,7 @@ def process_annot_msalign(msalign_filename, out_filename):
                     
 
     with open(out_filename, "w") as out_f:
-        out_f.write("Ion\tCount\n")
+        out_f.write("Ion\tCount\tCoverage\n")
         for ion, count in sorted(ion_counter.items(), key=lambda x: x[1], reverse=True):
             out_f.write(f"{ion}\t{count}\t{(count*100.0/total_ion_num):.2f}%\n")
         

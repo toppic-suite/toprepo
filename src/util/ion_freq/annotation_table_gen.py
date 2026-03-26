@@ -11,8 +11,17 @@ def count_frequency(df_termins, anno_df):
             anno_df['Count']
         )
     )
+    freq_map = dict(
+        zip(
+            anno_df['Ion'],
+            anno_df['Coverage']
+        )
+    )
     df_termins['count'] = (
        df_termins['label'].map(count_map)
+    )
+    df_termins['coverage'] = (
+       df_termins['label'].map(freq_map)
     )
     return df_termins
 
@@ -32,7 +41,9 @@ def anno_table_gen(input_tsv, table_tsv, out_prefix, activation_type):
     
     nc_results = count_frequency(df, anno_df)
     nc_results = nc_results.drop(columns='note')
+    nc_results['activation'] = activation_type.upper()
   
+    nc_results = nc_results[['activation'] + [col for col in nc_results.columns if col != 'activation']]
     # Save outputs
     out_file = Path(out_prefix) / f"{activation_type}_anno_table.tsv"
     out_file.parent.mkdir(parents=True, exist_ok=True)
@@ -44,7 +55,7 @@ def anno_table_gen(input_tsv, table_tsv, out_prefix, activation_type):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Generate annotation table for N and C-terminal ions")
     parser.add_argument("--input", required=True, type=str, help="Input TSV with ion counts")
-    parser.add_argument("--table", required=True, type=str, help="A TSV table with selected ion types")
+    parser.add_argument("--table", required=True, type=str, help="A TSV table with selected ion types", default="basic_annotation_table.tsv")
     parser.add_argument("--out", required=True, type=str, help="Output folder for annotated TSVs")
     parser.add_argument("--activation", required=True, type=str, help="Activation type (hcd, cid, etd, etc.)")
     args = parser.parse_args()
