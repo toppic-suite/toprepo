@@ -84,7 +84,7 @@ def ion_mode_selection(ion_mode, losses):
     ion_mode = ion_mode.lower()
 
     if ion_mode == "basic":
-        if str(losses).lower() == 'yes':
+        if losses:
             selected_losses = ["-H2O"]   
         else:
             selected_losses = []
@@ -395,7 +395,10 @@ def annot_msalign(input_msalign, label_freq_dict, cov_rate, output_file, activat
 
 def get_ion_list(ion_mode, activation, ion_losses):
     # Selecte ion types based on activation method and ion mode
-    ion_types = ['a','b', 'c', 'x', 'y','z','z_dot']
+    if ion_mode=='basic':
+        ion_types= ['b','y']
+    else:
+        ion_types = ['a','b', 'c', 'x', 'y','z','z_dot']
     
     selected_ions = {}
     for ion in ion_types:
@@ -436,7 +439,6 @@ if __name__ == "__main__":
     args = parser.parse_args()
     output_filename = args.out or "ms2_spectra_annot.msalign"
 
-    ion_mode = args.ion_type
     ion_mode, selected_losses = ion_mode_selection(args.ion_type, args.neutral_loss)
     ppm_tol = args.error_tol
     da_tol = args.da_tol
@@ -450,5 +452,4 @@ if __name__ == "__main__":
         activation_ions[activation] = selected_ions
         # if activation == 'hcd':
             # print(f"Annotating spectra with activation method: {activation_ions[activation]}")
-
     annot_msalign(args.msalign, label_freq_dict, cov_rate, output_filename, activation_ions, ppm_tol, da_tol)    
