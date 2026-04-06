@@ -91,6 +91,23 @@ Run the command:
 python3 toprepo/src/process/tsv/merge_mzml_msalign_toppic_info.py spectra_mzml_info.tsv spectra_msalign_info.tsv spectra_feature_info.tsv spectra_toppic_info.tsv spectra_mzml_msalign_feature_toppic_info.tsv
 ```
 
+**1.6 Add project information to merged files
+
+This step adds project-level information to each merged spectral TSV file.
+* Usage python3 combine_info_file_add_project_id.py <input_folder> <output_folder> <project_table_tsv>
+
+* Input:
+  * input_folder: A folder containing merged TSV files generated in Step 1.5 (e.g., *_combined_info.tsv).
+  * output_folder: A folder for storing the output TSV files with "PROJECT_id" will be saved to each TSV file.
+  * project_table_tsv: A TSV file containing mapping information between Dataset_id, MZML_file_name, and Project_id.
+* Output:
+  * TSV files with an additional column "PROJECT_id".
+
+Run the command:
+```
+python3 toprepo/src/process/tsv/combine_info_file_add_project_id.py F:\merged_info F:\merged_info_add_project_id dataset_project_info.tsv
+```
+
 ## 2. Generate annotated msalign files 
 
 We use an msalign file spectra_ms2.msalign with dataset id PXD029703 and its spectral information file spectra_mzml_msalign_feature_toppic_info.tsv to explain the method.
