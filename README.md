@@ -91,7 +91,7 @@ Run the command:
 python3 toprepo/src/process/tsv/merge_mzml_msalign_toppic_info.py spectra_mzml_info.tsv spectra_msalign_info.tsv spectra_feature_info.tsv spectra_toppic_info.tsv spectra_mzml_msalign_feature_toppic_info.tsv
 ```
 
-**1.6 Add project information to merged files
+**1.6 Add project information to merged files**
 
 This step adds project-level information to each merged spectral TSV file.
 * Usage python3 combine_info_file_add_project_id.py <input_folder> <output_folder> <project_table_tsv>
