@@ -60,10 +60,7 @@ def filter_msalign(input_msalign_file, output_msalign_file, evalue_cutoff=1e-4):
             #print(f"seq: {seq}, cover_count: {cover_count}, cover_ratio: {cover_ratio}")
             seq_coverage_filter_count += 1
             continue
-        if is_msalign:
-            ms_writer.write(spectrum)
-        else:
-            ms_writer.write_mz_intensity(spectrum)   
+        ms_writer.write(spectrum)
         output_count += 1
     print(f"\nFinished processing {count} spectra. Sequence filter: {seq_length_filter_count}, E-value filter: {e_value_filter_count}, Precursor charge filter: {precursor_charge_filter_count}, Coverage filter: {seq_coverage_filter_count}. Wrote {output_count} spectra to {output_msalign_file}.")
 
@@ -77,13 +74,10 @@ if __name__ == "__main__":
         "--out", type=str, default=None,
         help="Output msalign filename (default: ms2_spectra_annot.msalign)")
     parser.add_argument(
-        "--format", type=str, default="msalign",
-        help="Output format: msalign (default), mgf")
-    parser.add_argument(
         "--E_value_threshold", type=float, default=1e-4,
         help="E-value filter threshold (default: 1e-4)")
 
     
     args = parser.parse_args()
     output_filename = args.out or "ms2_spectra_annot.msalign"
-    filter_msalign(args.msalign, output_filename, format = args.format, evalue_cutoff = args.E_value_threshold)    
+    filter_msalign(args.msalign, output_filename, evalue_cutoff = args.E_value_threshold)    
