@@ -403,7 +403,10 @@ def annot_msalign(input_msalign, label_freq_dict, cov_rate, output_file, activat
 def get_ion_list(ion_mode, activation, ion_losses):
     # Selecte ion types based on activation method and ion mode
     if ion_mode=='basic':
-        ion_types= ['b','y']
+        if activation in ['hcd', 'cid']:
+            ion_types= ['b','y']
+        else:
+            ion_types = ['c','z_dot']
     else:
         ion_types = ['a','b', 'c', 'x', 'y','z','z_dot']
     
