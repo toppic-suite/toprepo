@@ -20,7 +20,7 @@ def main(input_file, output_file):
     last_printed = 0
     groups = []
     for (proj, acc), group in df.groupby(
-        ["DATASET_id","TOPPIC_protein_accession"]
+        ["PROJECT_id","TOPPIC_protein_accession"]
     ):
         groups.append(remove_duplicate_proteoform.deduplicate_group(group))
         rows_processed += len(group)
