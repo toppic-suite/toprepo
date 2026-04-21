@@ -91,11 +91,19 @@ def main(input_file, output_file):
     )
     print(f"Total input rows: {len(df)}")
     df['MSALIGN_precursor_mass'] = df['MSALIGN_precursor_monoisotopic_mass'].apply(lambda x: x.split(':')[0])
+
+    total_rows = len(df)
+    rows_processed = 0
+    last_printed = 0
     groups = []
     for (proj, acc), group in df.groupby(
         ["DATASET_id","TOPPIC_protein_accession"]
     ):
         groups.append(deduplicate_group(group))
+        rows_processed += len(group)
+        if rows_processed - last_printed >= 1000:
+            print(f"Progress: {rows_processed}/{total_rows} rows ({rows_processed/total_rows*100:.1f}%)")
+            last_printed = rows_processed
     
     deduped_chunk = pd.concat(groups, ignore_index=True)
     print(f"Producing {len(deduped_chunk)} deduplicated rows")
