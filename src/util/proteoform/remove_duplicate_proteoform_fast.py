@@ -2,6 +2,8 @@
 remove duplicate proteoform
 """
 
+import bisect
+
 import pandas as pd
 import sys
 
@@ -52,34 +54,34 @@ def is_duplicate(a, b):
 def deduplicate_group(df):
     df = df.copy()
     df["TOPPIC_e-value"] = df["TOPPIC_e-value"].astype(float)
+    df = df.sort_values("TOPPIC_e-value").reset_index(drop=True)
 
-    files = []
-    for f, sub in df.groupby("MSALIGN_file_name"):
-        sub = sub.sort_values("TOPPIC_e-value")  
-        files.append(sub)
+    rows = df.to_dict("records")
 
-    survivors = []
+    surv_list = []    # accepted survivors in insertion order
+    surv_masses = []  # sorted precursor masses for binary-search pre-filter
+    surv_sorted = []  # survivors in mass-sorted order (parallel to surv_masses)
 
-    for file_df in files:
-        for _, row in file_df.iterrows():
-            replace_idx = None
-            is_dup = False
+    for row in rows:
+        row_mass = float(row["MSALIGN_precursor_mass"])
 
-            for i, s in enumerate(survivors):
-                if is_duplicate(s, row):
-                    is_dup = True
+        # Only compare against survivors within ±2.2 Da using binary search
+        lo = bisect.bisect_left(surv_masses, row_mass - 2.2)
+        hi = bisect.bisect_right(surv_masses, row_mass + 2.2)
 
-                    if row["TOPPIC_e-value"] < s["TOPPIC_e-value"]:
-                        replace_idx = i
-                    break
+        is_dup = False
+        for i in range(lo, hi):
+            if is_duplicate(surv_sorted[i], row):
+                is_dup = True
+                break
 
-            if replace_idx is not None:
-                survivors[replace_idx] = row
+        if not is_dup:
+            surv_list.append(row)
+            pos = bisect.bisect_left(surv_masses, row_mass)
+            surv_masses.insert(pos, row_mass)
+            surv_sorted.insert(pos, row)
 
-            elif not is_dup:
-                survivors.append(row)
-
-    return pd.DataFrame(survivors)
+    return pd.DataFrame(surv_list)
 
 
 def main(input_file, output_file):
@@ -90,7 +92,6 @@ def main(input_file, output_file):
     )
     print(f"{len(df)}")
     df['MSALIGN_precursor_mass'] = df['MSALIGN_precursor_monoisotopic_mass'].apply(lambda x: x.split(':')[0])
-
     total_rows = len(df)
     processed = 0
     groups = []
