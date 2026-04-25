@@ -175,7 +175,7 @@ def info_merge(msalign_meta_filename, feature_meta_filename, top_filename, outpu
 
 if __name__ == "__main__":
     if len(sys.argv) != 6:
-        print("Usage: python script.py <msalign_info_filename> <feature_info_filename> <toppic_info_filename> <file_info_filename> <output_tsv_filename>")
+        print("Usage: python script.py <msalign_info_filename> <feature_info_filename> <toppic_info_filename> <ms_file_info_filename> <output_tsv_filename>")
     else:
         msalign_info_filename = sys.argv[1]
         feature_info_filename = sys.argv[2]
