@@ -1,41 +1,41 @@
-ion	terminus	loss	isotope	label	shift	note
-a	N-term	-H2O	-1	a-H2O-1	-47.007839715934	
-a	N-term	-H2O	0	a-H2O	-46.005489715934	
-a	N-term	-NH3	0	a-NH3	-45.02147403223	
-a	N-term	-NH3	1	a-NH3+1	-44.01912403223	
-a	N-term	none	-1	a-1	-28.99727503223	
-a	N-term	none	0	a	-27.99492503223	
-a	N-term	none	1	a+1	-26.99257503223	
-b	N-term	-H2O	-1	b-H2O-1	-19.012914683704	
-b	N-term	-H2O	0	b-H2O	-18.010564683704	
-b	N-term	-NH3	0	b-NH3	-17.026549	
-b	N-term	-NH3	1	b-NH3+1	-16.024199	
-c	N-term	-H2O	-1	c-H2O-1	-1.986414683704002	
-b	N-term	none	-1	b-1	-1.00235	other
-c	N-term	-H2O	0	c-H2O	-0.984064683704002	etd
-b	N-term	none	0	b	0.0	
-b	N-term	none	1	b+1	1.00235	
-c	N-term	none	-1	c-1	16.02415	
-c	N-term	none	0	c	17.0265	
-c	N-term	none	1	c+1	18.02885	
-z	C-term	-H2O	-1	z-H2O-1	-18.028939715934	
-z	C-term	-H2O	0	z-H2O	-17.026589715934	
-z_dot	C-term	-H2O	0	z_dot-H2O	-16.018664683704	
-z_dot	C-term	-NH3	0	z_dot-NH3	-15.034649	
-z_dot	C-term	-NH3	1	z_dot-NH3+1	-14.032299	
-y	C-term	-H2O	-1	y-H2O-1	-1.0023500000840004	
-z	C-term	none	-1	z-1	-0.01837503223	etd
-y	C-term	-H2O	0	y-H2O	-8.400036222155903e-11	other
-z	C-term	none	0	z	0.98397496777	
-z_dot	C-term	none	0	z_dot	1.9919	
-z_dot	C-term	none	1	z_dot+1	2.99425	
-y	C-term	none	-1	y-1	17.00821468362	
-y	C-term	none	0	y	18.01056468362	
-y	C-term	none	1	y+1	19.01291468362	
-x	C-term	-H2O	-1	x-H2O-1	24.976960284066	
-x	C-term	-H2O	0	x-H2O	25.979310284066	
-x	C-term	-NH3	0	x-NH3	26.96332596777	
-x	C-term	-NH3	1	x-NH3+1	27.96567596777	
-x	C-term	none	-1	x-1	42.98752496777	
-x	C-term	none	0	x	43.98987496777	
-x	C-term	none	1	x+1	44.99222496777	
+	ion	terminus	loss	isotope	label	shift	note
+0	a	N-term	-H2O	-1	a-H2O-1	-47.0078293	
+1	a	N-term	-H2O	0	a-H2O	-46.0054793	
+2	a	N-term	-NH3	0	a-NH3	-45.0214636	
+3	a	N-term	-NH3	1	a-NH3+1	-44.0191136	
+4	a	N-term	none	-1	a-1	-28.9972646	
+5	a	N-term	none	0	a	-27.9949146	
+6	a	N-term	none	1	a+1	-26.9925646	
+7	b	N-term	-H2O	-1	b-H2O-1	-19.0129147	
+8	b	N-term	-H2O	0	b-H2O	-18.0105647	
+9	b	N-term	-NH3	0	b-NH3	-17.0265490	
+10	z	C-term	-H2O	-1	z-H2O-1	-17.0188991	
+11	b	N-term	-NH3	1	b-NH3+1	-16.0241990	
+12	z_dot	C-term	-H2O	0	z_dot-H2O	-16.0187241	
+13	z	C-term	-H2O	0	z-H2O	-16.0165491	
+14	z_dot	C-term	-NH3	0	z_dot-NH3	-15.0347084	
+15	z_dot	C-term	-NH3	1	z_dot-NH3+1	-14.0323584	
+16	c	N-term	-H2O	-1	c-H2O-1	-1.9863656	
+17	b	N-term	none	-1	b-1	-1.0023500	other
+18	y	C-term	-H2O	-1	y-H2O-1	-1.0023500	
+19	c	N-term	-H2O	0	c-H2O	-0.9840156	etd
+20	b	N-term	none	0	b	0.0000000	
+21	y	C-term	-H2O	0	y-H2O	0.0000000	other
+22	z	C-term	none	-1	z-1	0.9916656	etd
+23	b	N-term	none	1	b+1	1.0023500	
+24	z_dot	C-term	none	0	z_dot	1.9918406	
+25	z	C-term	none	0	z	1.9940156	
+26	z_dot	C-term	none	1	z_dot+1	2.9941906	
+27	c	N-term	none	-1	c-1	16.0241991	
+28	y	C-term	none	-1	y-1	17.0082147	
+29	c	N-term	none	0	c	17.0265491	
+30	y	C-term	none	0	y	18.0105647	
+31	c	N-term	none	1	c+1	18.0288991	
+32	y	C-term	none	1	y+1	19.0129147	
+33	x	C-term	-H2O	-1	x-H2O-1	24.9769145	
+34	x	C-term	-H2O	0	x-H2O	25.9792645	
+35	x	C-term	-NH3	0	x-NH3	26.9632802	
+36	x	C-term	-NH3	1	x-NH3+1	27.9656302	
+37	x	C-term	none	-1	x-1	42.9874792	
+38	x	C-term	none	0	x	43.9898292	
+39	x	C-term	none	1	x+1	44.9921792	
