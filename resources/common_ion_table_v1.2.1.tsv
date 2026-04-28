@@ -17,11 +17,11 @@
 15	z_dot	C-term	-NH3	1	z_dot-NH3+1	-14.0323585	
 16	c	N-term	-H2O	-1	c-H2O-1	-1.9863656	
 17	y	C-term	-H2O	-1	y-H2O-1	-1.0023500	
-18	b	N-term	none	-1	b-1	-1.0023500	cid/hcd
-19	c	N-term	-H2O	0	c-H2O	-0.9840156	etd/ethcd
-20	z	C-term	none	-1	z-1	-0.0183344	etd/ethcd
+18	b	N-term	none	-1	b-1	-1.0023500	CID/HCD
+19	c	N-term	-H2O	0	c-H2O	-0.9840156	ETD/ETHCD
+20	z	C-term	none	-1	z-1	-0.0183344	ETD/ETHCD
 21	b	N-term	none	0	b	0.0000000	
-22	y	C-term	-H2O	0	y-H2O	0.0000000	cid/hcd
+22	y	C-term	-H2O	0	y-H2O	0.0000000	CID/HCD
 23	z	C-term	none	0	z	0.9840156	
 24	b	N-term	none	1	b+1	1.0023500	
 25	z_dot	C-term	none	0	z_dot	1.9918406	
