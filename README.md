@@ -1,6 +1,6 @@
 # TopRepo
 
-TopRepo is a top-down spectral repository containing more than 18 million MS/MS spectra from 12 species. For each MS raw file in TopRepo, msconvert is used to convert the raw file to a centroided mzML file, and then TopFD is employed to deconvolute spectra in the centroided mzML file to one or several msalign files and proteoform feature files. The msalign files are searched against its corresponding proteome sequence database for spectral identification using TopPIC. The identification results are stored in TSV files. 
+TopRepo is a top-down spectral repository containing more than 12 million MS/MS spectra from 12 species. For each MS raw file in TopRepo, msconvert is used to convert the raw file to a centroided mzML file, and then TopFD is employed to deconvolute spectra in the centroided mzML file to one or several msalign files and proteoform feature files. The msalign files are searched against its corresponding proteome sequence database for spectral identification using TopPIC. The identification results are stored in TSV files. 
 
 Using mzML files, msalign files, feature files, and spectral identification (TSV) files generated from the data analysis pipeline, Python scripts in this repository are used to generate TSV files with comprehensive spectral information, annotated msalign files, and annotated mgf files. 
 
