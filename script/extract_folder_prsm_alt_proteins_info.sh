@@ -4,7 +4,7 @@ DIR="$(dirname "$(realpath "$0")")"
 
 SINGLE_DIR="${1:-$DIR/03_single_prsm_remove_parameters}"
 PRSM_DIR="${2:-$DIR/03_prsm_remove_parameters}"
-OUT_DIR="${3:-$DIR/05_prsm_info}"
+OUT_DIR="${3:-$DIR/04_prsm_info}"
 
 mkdir -p "$OUT_DIR"
 
