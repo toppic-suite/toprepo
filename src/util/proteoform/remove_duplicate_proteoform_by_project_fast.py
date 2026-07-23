@@ -4,7 +4,7 @@ remove duplicate proteoform
 
 import pandas as pd
 import sys
-import remove_duplicate_proteoform_fast
+import remove_duplicate_proteoform_fast_exact
 
 
 def main(input_file, output_file):
@@ -22,7 +22,7 @@ def main(input_file, output_file):
     for (proj, acc), group in df.groupby(
         ["PROJECT_id","TOPPIC_protein_accession"]
     ):
-        groups.append(remove_duplicate_proteoform_fast.deduplicate_group(group))
+        groups.append(remove_duplicate_proteoform_fast_exact.deduplicate_group(group))
         rows_processed += len(group)
         if rows_processed - last_printed >= 1000:
             print(f"Progress: {rows_processed}/{total_rows} rows ({rows_processed/total_rows*100:.1f}%)")
