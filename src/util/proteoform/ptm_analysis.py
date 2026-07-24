@@ -3,16 +3,6 @@ import numpy as np
 import argparse
 
 
-def form_type_gen(df):
-    # Proteoforms that carry a mass shift (>= 1 unexpected modification). Coerce the
-    # count to numeric and treat a missing/blank value as 0, so a NaN count is never
-    # mistaken for a mass shift (which would otherwise slip through the != 0 test).
-    n_unexpected = pd.to_numeric(
-        df['TOPPIC_number_of_unexpected_modifications'], errors='coerce'
-    ).fillna(0)
-    return df[n_unexpected != 0]
-
-
 def extract_mass_shift(df):
     df = df.copy()
     # astype(str) so the .str accessor works even when the column is empty or all-NaN
@@ -155,19 +145,19 @@ def ptm_match_search(filename, mass_shift_filename, out_filename):
     form_df["MSALIGN_precursor_mass"] = pd.to_numeric(form_df["MSALIGN_precursor_mass"], errors="coerce")
     form_df['TOPPIC_sequence_length'] = form_df['TOPPIC_database_sequence'].str.len()
 
-    # Keep the proteoforms that carry a mass shift and match each shift to a common PTM.
-    form_df2 = form_type_gen(form_df)
-    form_df2 = extract_mass_shift(form_df2)
-    form_df2 = search_common_ptm(form_df2, mass_shift_dict)
+    # Match every row's mass shift (if any) to a common PTM. Rows without a mass shift
+    # simply get empty PTM_* columns.
+    form_df = extract_mass_shift(form_df)
+    form_df = search_common_ptm(form_df, mass_shift_dict)
 
     # The residue positions are only needed for the residue constraint during matching.
-    form_df2 = form_df2.drop(
+    form_df = form_df.drop(
         columns=["PTM_first_residue_position", "PTM_last_residue_position"],
         errors="ignore",
     )
-    form_df2.to_csv(out_filename, sep="\t", index=False)
-    print(f"Mass-shift proteoforms: {len(form_df2)}, "
-          f"matched to a common PTM: {int(form_df2['PTM_matched_mod'].notna().sum())}")
+    form_df.to_csv(out_filename, sep="\t", index=False)
+    print(f"Total rows: {len(form_df)}, "
+          f"matched to a common PTM: {int(form_df['PTM_matched_mod'].notna().sum())}")
     print(f"Output written to: {out_filename}")
 
 
