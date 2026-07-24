@@ -17,58 +17,100 @@ def extract_mass_shift(df):
     df = df.copy()
     # astype(str) so the .str accessor works even when the column is empty or all-NaN
     # (e.g. no mass-shift rows); "nan"/"None" simply fail the regex and stay NaN.
-    df["PTM_mass_shift"] = (
-        df["TOPPIC_unexpected_modifications"]
-        .astype(str)
-        .str.extract(r'([+-]?\d+\.\d+)')
-        .astype(float)
-    )
+    mods = df["TOPPIC_unexpected_modifications"].astype(str)
+
+    df["PTM_mass_shift"] = mods.str.extract(r'([+-]?\d+\.\d+)').astype(float)
+
+    # Residue range, written either as [first-last] or a single position [pos]
+    # (in which case first and last are the same residue).
+    positions = mods.str.extract(r'\[(\d+)(?:-(\d+))?\]')
+    df["PTM_first_residue_position"] = pd.to_numeric(
+        positions[0], errors="coerce"
+    ).astype("Int64")
+    df["PTM_last_residue_position"] = pd.to_numeric(
+        positions[1].fillna(positions[0]), errors="coerce"
+    ).astype("Int64")
     return df
 
 
 def load_mass_shift_dict(path):
     """Load the common-PTM mass shifts from a TSV file.
 
-    The file has a modification-name column and a mass column; by default these are
-    "Modification" and a column whose name starts with "Mass" (as in common_mass.tsv),
-    falling back to the first two columns. The mass cell may carry the applicable amino
-    acids after the value (e.g. "14.0157 CHKNQRILDEST"), so the leading numeric token is
-    taken as the mass. Returns an ordered {name: mass} dict.
+    The file has a modification-name column, a mass column, and the list of amino acids
+    the modification can occur on. By default these are "Modification", a column whose
+    name starts with "Mass", and a third column of residues. The residues may instead be
+    appended to the mass cell (e.g. "14.0157 CHKNQRILDEST"), so if there is no separate
+    residue column the tokens after the mass are used. Returns an ordered
+    {name: (mass, aa_set)} dict, where aa_set is the set of modifiable amino acids
+    (empty means no residue restriction).
     """
-    df = pd.read_csv(path, sep="\t")
+    df = pd.read_csv(path, sep="\t", dtype=str)
     cols = list(df.columns)
     name_col = "Modification" if "Modification" in cols else cols[0]
     mass_col = next(
         (c for c in cols if str(c).strip().lower().startswith("mass")),
         cols[1],
     )
+    # Explicit residue column, else the residues are appended to the mass cell.
+    aa_col = next(
+        (c for c in cols
+         if c not in (name_col, mass_col)
+         and any(k in str(c).strip().lower() for k in ("aa", "residue", "amino"))),
+        None,
+    )
+    if aa_col is None and len(cols) > 2:
+        aa_col = next((c for c in cols if c not in (name_col, mass_col)), None)
+
     out = {}
-    for n, m in zip(df[name_col], df[mass_col]):
-        if pd.isna(n) or pd.isna(m):
+    for _, row in df.iterrows():
+        name, raw_mass = row[name_col], row[mass_col]
+        if pd.isna(name) or pd.isna(raw_mass):
             continue
-        out[str(n)] = float(str(m).split()[0])  # value may be "<mass> <residues>"
+        tokens = str(raw_mass).split()          # "<mass> [<residues>]"
+        mass = float(tokens[0])
+        if aa_col is not None and pd.notna(row[aa_col]):
+            aa = str(row[aa_col])
+        else:
+            aa = "".join(tokens[1:])
+        aa_set = {c for c in aa.upper() if c.isalpha()}
+        out[str(name)] = (mass, aa_set)
     return out
 
 
-def match_mass_shift_by_precursor_tol(mass_shift, precursor_mass, mass_shift_dict, ppm_tol=10):
+def match_mass_shift_by_precursor_tol(mass_shift, precursor_mass, subsequence,
+                                      mass_shift_dict, ppm_tol=10):
     if pd.isna(mass_shift) or pd.isna(precursor_mass):
         return pd.Series([None, np.nan])
 
     tol_da = precursor_mass * ppm_tol * 1e-6
+    subseq_residues = {c for c in str(subsequence).upper() if c.isalpha()}
 
     # Pick the closest PTM within tolerance, not merely the first one in dict order
     # that happens to fit (which could otherwise mis-assign when two PTMs are both
-    # within tolerance, e.g. for very large precursors).
+    # within tolerance, e.g. for very large precursors). A PTM only qualifies if the
+    # modified subsequence contains at least one amino acid it can modify.
     best_name, best_err = None, None
-    for name, theo_mass in mass_shift_dict.items():
+    for name, (theo_mass, aa_set) in mass_shift_dict.items():
         da_error = abs(mass_shift - theo_mass)
-        if da_error <= tol_da and (best_err is None or da_error < best_err):
+        if da_error > tol_da:
+            continue
+        if aa_set and not (subseq_residues & aa_set):
+            continue
+        if best_err is None or da_error < best_err:
             best_name, best_err = name, da_error
 
     if best_name is None:
         return pd.Series([None, np.nan])
 
     return pd.Series([best_name, best_err])
+
+
+def _modified_subsequence(sequence, first_pos, last_pos):
+    """Residues of TOPPIC_database_sequence spanned by the mass shift, [first, last]
+    (1-based, inclusive). Returns "" if the sequence or positions are missing."""
+    if pd.isna(sequence) or pd.isna(first_pos) or pd.isna(last_pos):
+        return ""
+    return str(sequence)[int(first_pos) - 1:int(last_pos)]
 
 
 def search_common_ptm(df, mass_shift_dict, ppm_tol=10):
@@ -85,14 +127,23 @@ def search_common_ptm(df, mass_shift_dict, ppm_tol=10):
         lambda row: match_mass_shift_by_precursor_tol(
             row["PTM_mass_shift"],
             row["MSALIGN_precursor_mass"],
+            _modified_subsequence(
+                row["TOPPIC_database_sequence"],
+                row["PTM_first_residue_position"],
+                row["PTM_last_residue_position"],
+            ),
             mass_shift_dict,
             ppm_tol
         ),
         axis=1
     )
 
-    # The PTM_* columns describe a match; blank the shift where no PTM was matched.
-    df.loc[df["PTM_matched_mod"].isna(), "PTM_mass_shift"] = np.nan
+    # The PTM_* columns describe a match; blank the shift and its residue positions
+    # where no PTM was matched.
+    unmatched = df["PTM_matched_mod"].isna()
+    df.loc[unmatched, "PTM_mass_shift"] = np.nan
+    df.loc[unmatched, "PTM_first_residue_position"] = pd.NA
+    df.loc[unmatched, "PTM_last_residue_position"] = pd.NA
 
     return df
 
@@ -109,6 +160,11 @@ def ptm_match_search(filename, mass_shift_filename, out_filename):
     form_df2 = extract_mass_shift(form_df2)
     form_df2 = search_common_ptm(form_df2, mass_shift_dict)
 
+    # The residue positions are only needed for the residue constraint during matching.
+    form_df2 = form_df2.drop(
+        columns=["PTM_first_residue_position", "PTM_last_residue_position"],
+        errors="ignore",
+    )
     form_df2.to_csv(out_filename, sep="\t", index=False)
     print(f"Mass-shift proteoforms: {len(form_df2)}, "
           f"matched to a common PTM: {int(form_df2['PTM_matched_mod'].notna().sum())}")
