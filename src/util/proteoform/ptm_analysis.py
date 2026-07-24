@@ -91,6 +91,9 @@ def search_common_ptm(df, mass_shift_dict, ppm_tol=10):
         axis=1
     )
 
+    # The PTM_* columns describe a match; blank the shift where no PTM was matched.
+    df.loc[df["PTM_matched_mod"].isna(), "PTM_mass_shift"] = np.nan
+
     return df
 
 def ptm_match_search(filename, mass_shift_filename, out_filename):
