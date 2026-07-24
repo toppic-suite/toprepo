@@ -17,7 +17,7 @@ def extract_mass_shift(df):
     df = df.copy()
     # astype(str) so the .str accessor works even when the column is empty or all-NaN
     # (e.g. no mass-shift rows); "nan"/"None" simply fail the regex and stay NaN.
-    df["mass_shift"] = (
+    df["PTM_mass_shift"] = (
         df["TOPPIC_unexpected_modifications"]
         .astype(str)
         .str.extract(r'([+-]?\d+\.\d+)')
@@ -52,7 +52,7 @@ def load_mass_shift_dict(path):
 
 def match_mass_shift_by_precursor_tol(mass_shift, precursor_mass, mass_shift_dict, ppm_tol=10):
     if pd.isna(mass_shift) or pd.isna(precursor_mass):
-        return pd.Series([None, np.nan, np.nan])
+        return pd.Series([None, np.nan])
 
     tol_da = precursor_mass * ppm_tol * 1e-6
 
@@ -66,26 +66,24 @@ def match_mass_shift_by_precursor_tol(mass_shift, precursor_mass, mass_shift_dic
             best_name, best_err = name, da_error
 
     if best_name is None:
-        return pd.Series([None, np.nan, np.nan])
+        return pd.Series([None, np.nan])
 
-    ppm_error = best_err / precursor_mass * 1e6
-    return pd.Series([best_name, best_err, ppm_error])
+    return pd.Series([best_name, best_err])
 
 
 def search_common_ptm(df, mass_shift_dict, ppm_tol=10):
     df = df.copy()
 
     # df.apply(axis=1) on an empty frame returns an empty frame with no columns, which
-    # cannot be assigned to the three named columns; handle that case explicitly.
+    # cannot be assigned to the named columns; handle that case explicitly.
     if df.empty:
-        df["matched_mod"] = pd.Series(dtype=object)
-        df["da_error"] = pd.Series(dtype=float)
-        df["ppm_error"] = pd.Series(dtype=float)
+        df["PTM_matched_mod"] = pd.Series(dtype=object)
+        df["PTM_match_da_error"] = pd.Series(dtype=float)
         return df
 
-    df[["matched_mod", "da_error", "ppm_error"]] = df.apply(
+    df[["PTM_matched_mod", "PTM_match_da_error"]] = df.apply(
         lambda row: match_mass_shift_by_precursor_tol(
-            row["mass_shift"],
+            row["PTM_mass_shift"],
             row["MSALIGN_precursor_mass"],
             mass_shift_dict,
             ppm_tol
@@ -110,7 +108,7 @@ def ptm_match_search(filename, mass_shift_filename, out_filename):
 
     form_df2.to_csv(out_filename, sep="\t", index=False)
     print(f"Mass-shift proteoforms: {len(form_df2)}, "
-          f"matched to a common PTM: {int(form_df2['matched_mod'].notna().sum())}")
+          f"matched to a common PTM: {int(form_df2['PTM_matched_mod'].notna().sum())}")
     print(f"Output written to: {out_filename}")
 
 
