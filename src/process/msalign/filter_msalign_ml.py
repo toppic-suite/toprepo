@@ -4,8 +4,11 @@ import argparse
 import msalign_reader
 import msalign_writer
 
+SEQ_LENGTH_CUTOFF = 200
 
-def filter_msalign(input_msalign_file, output_msalign_file, evalue_cutoff=1e-4):
+
+def filter_msalign(input_msalign_file, output_msalign_file, evalue_cutoff=1e-4,
+                   skip_seq_length_filter=False, long_seq_only=False):
     ms_reader = msalign_reader.MsalignReader(input_msalign_file)
     ms_writer = msalign_writer.MsalignWriter(output_msalign_file)
     count = 0 
@@ -19,9 +22,14 @@ def filter_msalign(input_msalign_file, output_msalign_file, evalue_cutoff=1e-4):
         if count % 1000 == 0:
             print(f"\rProcessed {count} spectra. Sequence filter: {seq_length_filter_count}, E-value filter: {e_value_filter_count}, Precursor charge filter: {precursor_charge_filter_count}, Coverage filter: {seq_coverage_filter_count}. Output {output_count} spectra.", end="", flush=True)
         seq = spectrum["meta"].get("DATABASE_SEQUENCE")
-        if (len(seq) > 200): 
-            seq_length_filter_count += 1
-            continue
+        if not skip_seq_length_filter:
+            if long_seq_only:
+                keep_seq = len(seq) > SEQ_LENGTH_CUTOFF
+            else:
+                keep_seq = len(seq) <= SEQ_LENGTH_CUTOFF
+            if not keep_seq:
+                seq_length_filter_count += 1
+                continue
         e_value = float(spectrum["meta"].get("E_VALUE", 10000))
         if (e_value > evalue_cutoff):
             e_value_filter_count += 1
@@ -76,8 +84,19 @@ if __name__ == "__main__":
     parser.add_argument(
         "--E_value_threshold", type=float, default=1e-4,
         help="E-value filter threshold (default: 1e-4)")
+    # By default only sequences with a length <= 200 are kept. The two options below
+    # change that, and cannot be combined.
+    seq_length_group = parser.add_mutually_exclusive_group()
+    seq_length_group.add_argument(
+        "--skip_seq_length_filter", action='store_true',
+        help=f"Do not filter on sequence length (default: keep length <= {SEQ_LENGTH_CUTOFF})")
+    seq_length_group.add_argument(
+        "--long_seq_only", action='store_true',
+        help=f"Keep only sequences with a length > {SEQ_LENGTH_CUTOFF}")
 
-    
+
     args = parser.parse_args()
     output_filename = args.out or "ms2_spectra_annot.msalign"
-    filter_msalign(args.msalign, output_filename, evalue_cutoff = args.E_value_threshold)    
+    filter_msalign(args.msalign, output_filename, evalue_cutoff = args.E_value_threshold,
+                   skip_seq_length_filter = args.skip_seq_length_filter,
+                   long_seq_only = args.long_seq_only)
