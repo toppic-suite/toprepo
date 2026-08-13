@@ -1,0 +1,41 @@
+	ion	terminus	loss	isotope	label	shift	note
+0	a	N-term	-H2O	-1	a-H2O-1	-47.0078293	
+1	a	N-term	-H2O	0	a-H2O	-46.0054793	
+2	a	N-term	-NH3	0	a-NH3	-45.0214637	
+3	a	N-term	-NH3	1	a-NH3+1	-44.0191137	
+4	a	N-term	none	-1	a-1	-28.9972646	
+5	a	N-term	none	0	a	-27.9949146	
+6	a	N-term	none	1	a+1	-26.9925646	
+7	b	N-term	-H2O	-1	b-H2O-1	-19.0129147	
+8	z	C-term	-H2O	-1	z-H2O-1	-18.0288991	
+9	b	N-term	-H2O	0	b-H2O	-18.0105647	
+10	z	C-term	-H2O	0	z-H2O	-17.0265491	
+11	b	N-term	-NH3	0	b-NH3	-17.0265491	
+12	b	N-term	-NH3	1	b-NH3+1	-16.0241991	
+13	z_dot	C-term	-H2O	0	z_dot-H2O	-16.0187241	
+14	z_dot	C-term	-NH3	0	z_dot-NH3	-15.0347085	
+15	z_dot	C-term	-NH3	1	z_dot-NH3+1	-14.0323585	
+16	c	N-term	-H2O	-1	c-H2O-1	-1.9863656	
+17	y	C-term	-H2O	-1	y-H2O-1	-1.0023500	
+18	b	N-term	none	-1	b-1	-1.0023500	CID/HCD
+19	c	N-term	-H2O	0	c-H2O	-0.9840156	ETD/ETHCD
+20	z	C-term	none	-1	z-1	-0.0183344	ETD/ETHCD
+21	b	N-term	none	0	b	0.0000000	
+22	y	C-term	-H2O	0	y-H2O	0.0000000	CID/HCD
+23	z	C-term	none	0	z	0.9840156	
+24	b	N-term	none	1	b+1	1.0023500	
+25	z_dot	C-term	none	0	z_dot	1.9918406	
+26	z_dot	C-term	none	1	z_dot+1	2.9941906	
+27	c	N-term	none	-1	c-1	16.0241991	
+28	y	C-term	none	-1	y-1	17.0082147	
+29	c	N-term	none	0	c	17.0265491	
+30	y	C-term	none	0	y	18.0105647	
+31	c	N-term	none	1	c+1	18.0288991	
+32	y	C-term	none	1	y+1	19.0129147	
+33	x	C-term	-H2O	-1	x-H2O-1	24.9769145	
+34	x	C-term	-H2O	0	x-H2O	25.9792645	
+35	x	C-term	-NH3	0	x-NH3	26.9632801	
+36	x	C-term	-NH3	1	x-NH3+1	27.9656301	
+37	x	C-term	none	-1	x-1	42.9874792	
+38	x	C-term	none	0	x	43.9898292	
+39	x	C-term	none	1	x+1	44.9921792	

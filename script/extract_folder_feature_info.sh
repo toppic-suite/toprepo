@@ -2,12 +2,12 @@
 
 DIR="$(dirname "$(realpath "$0")")"
 
-for f in "$DIR"/*.tsv; do
+for f in "$DIR"/*.feature; do
     basename="$(basename "$f")"
-    base="${basename%_ms2_toppic_prsm_single_replaced.tsv}"
+    base="${basename%_ms2.feature}"
     project_id="${basename%%_*}"
-    out="${base}_toppic_info.tsv"
-    python3 prsm_preprocess.py $f $project_id --output $out
+    out="${base}_feature_info.tsv"
+    python3 extract_feature_info.py $project_id $f $out
     echo "Processed: $(basename "$f") $project_id -> $(basename "$out")"
 done
 

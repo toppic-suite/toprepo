@@ -73,7 +73,7 @@ def meta_merge(mzml_meta_filename, msalign_meta_filename, output_file=None, wfil
     merged_meta_df = meta_df1.merge(
         meta_df2,
         on=['DATASET ID', 'MZML file name', 'MZML MS2 scan'],
-        how='left',
+        how='right',
         suffixes=('', '_new')
     )
 

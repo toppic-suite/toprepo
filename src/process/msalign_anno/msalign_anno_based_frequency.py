@@ -1,6 +1,8 @@
 import numpy as np
 import time
 import argparse
+import re
+import pandas as pd
 from process.msalign import msalign_reader
 from process.msalign import msalign_writer
 
@@ -61,68 +63,161 @@ LOSS_MASS = {
 }
 
 
-# if we need to increase i, return true, otherwise, return false
-def increase_I(i, j, deviation, exp_masses, theo_masses): 
-    # we assume that each exp peak is matched to at most one theoretical
-    # peak, so we do not check i and j+1
-    if deviation <= 0:
-        return True
-    # severl exp peak can be matched to the same theoretical peak
-    if i >= len (exp_masses) - 1:
-        return False
+def generalize_ion(ion):
+    ion = ion.strip()      
+    match = re.match(r"^(z_dot|[abcxyz])(\d+)([-+].*)?$", ion)
+    if match:
+        ion_type = match.group(1)
+        suffix = match.group(3) if match.group(3) else ""
+        return ion_type + suffix
+    return ion
 
-    next_pos = exp_masses[i + 1]
-    if j >= len(theo_masses) - 1:
-        return True
+def load_annotation_tables(tsv_path):
+    anno_df = pd.read_csv(tsv_path, sep='\t')
+    act_types = anno_df['activation'].unique()
+    label_dict = {}
+    for act in act_types:
+        key = act.lower()
+        df = anno_df[anno_df['activation'] == act]
+        label_dict[key] = {
+            label: (count, coverage)
+            for label, count, coverage in zip(df["label"], df["count"], df["coverage"])
+        }
+
+    return label_dict
+
+def ion_mode_selection(ion_mode, losses):
+    ion_mode = ion_mode.lower()
+
+    if ion_mode == "basic":
+        if losses:
+            selected_losses = ["-H2O"]   
+        else:
+            selected_losses = []
+
+    elif ion_mode == "all":
+        selected_losses = ["-H2O", "-NH3"]
+
     else:
-        # check which theoretical mass is closer 
-        return abs(next_pos - theo_masses[j]) < abs(next_pos - theo_masses[j + 1])
-  
-def comp_exp_mass_errors(exp_masses, theo_masses):
-    min_distances = [float('inf')] * len(exp_masses)
-    theo_indexes = [int(-1)] * len(exp_masses)
-    i = 0
-    j = 0
-    while (i < len(exp_masses) and j < len(theo_masses)):
-        d = exp_masses[i] - theo_masses[j];
-        #print(f"Comparing exp_masses[{i}]={exp_masses[i]:.4f} to theo_masses[{j}]={theo_masses[j]:.4f}, d={d:.4f}"  )
-        if (abs(d) <= abs(min_distances[i])):
-            min_distances[i] = d
-            theo_indexes[i] = j
-        if increase_I(i, j, d, exp_masses, theo_masses): 
-            i = i + 1
-        else: 
-            j = j + 1
-    return theo_indexes
+        raise ValueError("please select ion mode = 'basic' or 'all'.")
 
-# ---------- MATCH OBSERVED TO THEORETICAL ----------
-def match_observed_to_theo(exp_mass_table, theo_mass_table, seq, ppm_tol=20.0):
-    exp_mass = np.array([e['mass'] for e in exp_mass_table])
-    theo_mass = np.array([t['mass'] for t in theo_mass_table])
-    theo_indexes = comp_exp_mass_errors(exp_mass, theo_mass)
+    return ion_mode, selected_losses
+
+
+def match_all_annotations(exp_mass_table, theo_mass_table, seq, activation,
+                          label_freq_dict, cov_rate, ppm_tol=20.0, da_tol=0.01):
+
     anno_peak_lines = []
     bond_num = len(seq) - 1
     coverage = [False] * bond_num
-    for i in range(len(exp_mass)):
-        if theo_indexes[i] >= 0:
-            theo_m = theo_mass[theo_indexes[i]]
-            delta_da = exp_mass[i] - theo_m
-            delta_ppm = (delta_da / theo_m) * 1e6
-            if abs(delta_ppm) <= ppm_tol or abs(delta_da) <= 0.01:
-                pos = theo_mass_table[theo_indexes[i]]['pos']
-                anno_line = exp_mass_table[i]['line'].strip() + "\t" \
-                             f"{theo_mass_table[theo_indexes[i]]['ion']}" + "\t" \
-                             f"{theo_mass_table[theo_indexes[i]]['aa_num']}" + "\t" \
-                             f"{theo_mass_table[theo_indexes[i]]['pos']}" + "\t" \
-                             f"{theo_mass_table[theo_indexes[i]]['shift']}" + "\t" \
-                             f"{delta_da:.4f}" + "\t" \
-                             f"{delta_ppm:.2f}"
-                anno_peak_lines.append(anno_line)
-                coverage[pos - 1] = True
-                continue    
-        anno_peak_lines.append(exp_mass_table[i]['line'])
-    # compute sequence coverage
-    covered_bonds = sum(1 for c in coverage if c)
+
+    i = 0
+    j = 0
+
+    while i < len(exp_mass_table) and j < len(theo_mass_table):
+
+        exp = exp_mass_table[i]
+        theo = theo_mass_table[j]
+
+        exp_m = exp['mass']
+        theo_m = theo['mass']
+        if theo_m <= 0:
+            j += 1
+            continue
+
+        delta_da = exp_m - theo_m
+        delta_ppm = (delta_da / theo_m) * 1e6
+
+        if (
+            (ppm_tol is not None and abs(delta_ppm) <= ppm_tol) or
+            (da_tol is not None and abs(delta_da) <= da_tol)
+        ):
+
+            matches = []
+
+            k = j
+
+            # scan neighboring theoretical ions
+            while k < len(theo_mass_table):
+
+                theo2 = theo_mass_table[k]
+
+                delta_da = exp_m - theo2['mass']
+                delta_ppm = (delta_da / theo2['mass']) * 1e6
+
+                if (
+                    (ppm_tol is not None and abs(delta_ppm) <= ppm_tol) or
+                    (da_tol is not None and abs(delta_da) <= da_tol)
+                ):
+
+                    ion_label = theo2['ion'] # e.g. y12-H2O-1
+                    ion_gen_label = generalize_ion(ion_label)  # y-H2O-1
+                    
+                    # Skip if no table
+                    if activation.lower() not in label_freq_dict:
+                        k += 1
+                        continue
+                    
+                    freq_dict = label_freq_dict[activation.lower()]
+                    # only keep if label exists
+                    if ion_gen_label not in freq_dict:
+                        k += 1
+                        continue
+                    
+                    matches.append({
+                        'ion': ion_label,
+                        'aa_num': theo2['aa_num'],
+                        'pos': theo2['pos'],
+                        'shift': theo2['shift'],
+                        'delta_da': delta_da,
+                        'delta_ppm': delta_ppm,
+                        'freq': freq_dict[ion_gen_label][0],
+                        'rate': float(freq_dict[ion_gen_label][1].rstrip('%'))
+                    })
+
+                    k += 1
+                else:
+                    break
+
+            base_cols = exp['cols']
+
+            if matches:
+                # pick highest frequency annotation
+                best = max(matches, key=lambda x: x['freq'])
+                if best['rate'] >= cov_rate:
+                    coverage[best['pos'] - 1] = True
+                    flat = [
+                        best['ion'],
+                        str(best['aa_num']),
+                        str(best['pos']),
+                        str(best['shift']),
+                        f"{best['delta_da']:.4f}",
+                        f"{best['delta_ppm']:.2f}"
+                    ]
+    
+                    line_out = "\t".join(base_cols + flat)
+                else:
+                    line_out = "\t".join(base_cols)
+            else:            
+                line_out = "\t".join(base_cols)
+
+            anno_peak_lines.append(line_out)
+            i += 1
+
+        elif exp_m < theo_m:        
+            anno_peak_lines.append("\t".join(exp['cols']))
+            i += 1
+        else:
+            j += 1
+
+    # remaining experimental peaks
+    while i < len(exp_mass_table):
+        exp = exp_mass_table[i]
+        anno_peak_lines.append("\t".join(exp['cols']))
+        i += 1
+        
+    covered_bonds = sum(coverage)
+
     return anno_peak_lines, covered_bonds
 
 def build_mass_table(clean_seq, selected_ions, n_term_acetyl=False, fixed_mod_list=[], unexpected_mod_list=[]):
@@ -175,26 +270,40 @@ def build_mass_table(clean_seq, selected_ions, n_term_acetyl=False, fixed_mod_li
     mass_table = []
     for ion in selected_ions:
         shift = selected_ions[ion]
-        ion_first_char = ion[0]  # Get the base ion type (e.g., 'b' from 'b-H2O')
+        # ion_first_char = ion[0]  # Get the base ion type (e.g., 'b' from 'b-H2O')
+        # -------- split base ion and loss --------
+        if "-" in ion or "+" in ion:
+            if "-" in ion:
+                base, loss = ion.split("-", 1)
+                loss = "-" + loss
+            else:
+                base, loss = ion.split("+", 1)
+                loss = "+" + loss
+        else:
+            base = ion
+            loss = ""
+        
+        ion_first_char = base[0]
+        
         # Build mass series: N-terminal 
         if ion_first_char in ['a', 'b', 'c']:
             for i in range(n - 1):
                 aa_num = i + 1
                 neutral_mass = prefix_mass_list[i] + shift
                 #print(f"Prefix ion: {ion}{aa_num}, mass: {prefix_mass:.4f}")
-                mass_table.append({'ion': f"{ion}{aa_num}", 'pos': aa_num, 'aa_num': aa_num, 'shift': 0, 'mass': neutral_mass})
+                mass_table.append({'ion': f"{base}{aa_num}{loss}", 'pos': aa_num, 'aa_num': aa_num, 'shift': 0, 'mass': neutral_mass})
                 # ±1.00235 Da variants
-                mass_table.append({'ion': f"{ion}{aa_num}+1", 'pos': aa_num, 'aa_num': aa_num, 'shift': 1, 'mass': neutral_mass + ISOTOPIC_MASS})
-                mass_table.append({'ion': f"{ion}{aa_num}-1", 'pos': aa_num, 'aa_num': aa_num, 'shift': -1, 'mass': neutral_mass - ISOTOPIC_MASS})
+                mass_table.append({'ion': f"{base}{aa_num}{loss}+1", 'pos': aa_num, 'aa_num': aa_num, 'shift': 1, 'mass': neutral_mass + ISOTOPIC_MASS})
+                mass_table.append({'ion': f"{base}{aa_num}{loss}-1", 'pos': aa_num, 'aa_num': aa_num, 'shift': -1, 'mass': neutral_mass - ISOTOPIC_MASS})
 
         else:  # x, y, z, zo are from C-terminal
             for i in range(n - 1, 0, -1):
                 aa_num = n - i
                 neutral_mass = suffix_mass_list[i] + shift
-                mass_table.append({'ion': f"{ion}{aa_num}", 'pos': n - aa_num, 'aa_num': aa_num, 'shift': 0, 'mass': neutral_mass})
+                mass_table.append({'ion': f"{base}{aa_num}{loss}", 'pos': n - aa_num, 'aa_num': aa_num, 'shift': 0, 'mass': neutral_mass})
                 # ±1.00235 Da variants
-                mass_table.append({'ion': f"{ion}{aa_num}+1", 'pos': n - aa_num, 'aa_num': aa_num, 'shift': 1, 'mass': neutral_mass + ISOTOPIC_MASS})
-                mass_table.append({'ion': f"{ion}{aa_num}-1", 'pos': n - aa_num, 'aa_num': aa_num, 'shift': -1, 'mass': neutral_mass - ISOTOPIC_MASS})
+                mass_table.append({'ion': f"{base}{aa_num}{loss}+1", 'pos': n - aa_num, 'aa_num': aa_num, 'shift': 1, 'mass': neutral_mass + ISOTOPIC_MASS})
+                mass_table.append({'ion': f"{base}{aa_num}{loss}-1", 'pos': n - aa_num, 'aa_num': aa_num, 'shift': -1, 'mass': neutral_mass - ISOTOPIC_MASS})
     
     # Ensure masses are in increasing order
     mass_table.sort(key=lambda x: x['mass'])
@@ -205,11 +314,11 @@ def parse_proteoform(spectrum_meta):
     n_term_acetyl = proteoform_str.startswith('[Acetyl]-')
 
     #------get fixed modification's position and modification-----------
-    fixed_ptms = spectrum_meta.get("FIXED_PTMS")
+    fixed_ptms = spectrum_meta.get("FIXED_MODIFICATIONS")
     fixed_mod_list = []
     if isinstance(fixed_ptms, str) and fixed_ptms != "":
         fixed_ptms = fixed_ptms.strip()
-        print(f"FIXED_PTMS: {fixed_ptms}")
+        # print(f"FIXED_MODIFICATIONS: {fixed_ptms}")
         for ptm in fixed_ptms.split(';'):
             ptm_name = ptm.split(':')[0]
             #print(f"Parsed unexpected mass: {mass}")
@@ -242,7 +351,7 @@ def parse_proteoform(spectrum_meta):
     return n_term_acetyl, fixed_mod_list, unexpected_mod_list
         
 
-def annot_one_spectrum(spectrum, activation_ions=None, ppm_tol=20.0):
+def annot_one_spectrum(spectrum, label_freq_dict, cov_rate, activation_ions=None, ppm_tol=20.0, da_tol=0.01):
     seq = spectrum["meta"].get("DATABASE_SEQUENCE", None)
     if seq in (None, ""):
         spectrum["meta_lines"].append("SEQUENCE_COVERAGE=")
@@ -252,11 +361,13 @@ def annot_one_spectrum(spectrum, activation_ions=None, ppm_tol=20.0):
     exp_mass_table = []
     for line in peak_lines:
         stripped = line.strip()
+        # stripped = line.rstrip("\n") 
         parts = stripped.split()
         if len(parts) >= 4:
             exp_mass_table.append({
                 'mass': float(parts[0]),
-                'line': line
+                'cols': parts[:4]
+                # 'line': line
             })
     exp_mass_table.sort(key=lambda x: x['mass'])
     selected_ions = activation_ions.get(activation, None)
@@ -268,44 +379,35 @@ def annot_one_spectrum(spectrum, activation_ions=None, ppm_tol=20.0):
     theo_mass_table = build_mass_table(seq, selected_ions = selected_ions, 
                                        n_term_acetyl=n_term_acetyl, fixed_mod_list=fixed_mod_list, 
                                        unexpected_mod_list=unexpected_mod_list) 
-    annot_peak_lines, covered_bonds = match_observed_to_theo(exp_mass_table, theo_mass_table, seq=seq, ppm_tol=ppm_tol)
+    annot_peak_lines, covered_bonds = match_all_annotations(exp_mass_table, theo_mass_table, seq, activation, label_freq_dict, cov_rate, ppm_tol=ppm_tol, da_tol=da_tol)      
     spectrum["meta_lines"].append(f"SEQUENCE_COVERAGE={covered_bonds}")
     spectrum["peak_lines"] = annot_peak_lines
     return spectrum
 
 # ---------- WRITE ANNOTATED MSALIGN WITH MULTIPROCESSING ----------
-def annot_msalign(input_msalign, output_file, activation_ions, ppm_tol=20.0):
+def annot_msalign(input_msalign, label_freq_dict, cov_rate, output_file, activation_ions, ppm_tol=20.0, da_tol=0.01):
     ms_reader = msalign_reader.MsalignReader(input_msalign)
     ms_writer = msalign_writer.MsalignWriter(output_file)
+    
     count = 0
     start_time = time.time()
     for spectrum in ms_reader.readmsalign_iter():
-        spectrum = annot_one_spectrum(spectrum, activation_ions=activation_ions, ppm_tol=ppm_tol)
+        spectrum = annot_one_spectrum(spectrum, label_freq_dict, cov_rate, activation_ions=activation_ions, ppm_tol=ppm_tol, da_tol=da_tol)
         ms_writer.write(spectrum)
         count += 1
         if count % 1000 == 0:
             elapsed_time = time.time() - start_time
             print(f"\rAnnotated {count} spectra. Elapsed time: {elapsed_time:.2f} seconds.", end="", flush=True)
 
-def get_ion_list(ion_mode, activation, include_ion_loss):
+def get_ion_list(ion_mode, activation, ion_losses):
     # Selecte ion types based on activation method and ion mode
-    if ion_mode == "basic":
-        if activation in ['hcd', 'cid', 'ethcd']:
-            ion_types = ['b', 'y']
-        elif activation in ['etd', 'ecd']:
-            ion_types = ['c', 'z_dot']
+    if ion_mode=='basic':
+        if activation in ['hcd', 'cid']:
+            ion_types= ['b','y']
         else:
-            print(f"Unknown activation method '{activation}', defaulting to 'b' and 'y' ions.")
-    elif ion_mode == "all":
-        ion_types = list(ION_TYPES.keys())
+            ion_types = ['c','z_dot']
     else:
-        raise ValueError(f"Invalid ion_mode: {ion_mode}. Choose 'basic' or 'all'.")
-    
-    if (include_ion_loss):
-        ion_losses = {"-H2O": - H2O_MASS,
-                      "-NH3": - NH3_MASS}
-    else:
-        ion_losses = {}
+        ion_types = ['a','b', 'c', 'x', 'y','z','z_dot']
     
     selected_ions = {}
     for ion in ion_types:
@@ -315,8 +417,12 @@ def get_ion_list(ion_mode, activation, include_ion_loss):
         ion_shift = ION_TYPES[ion]
         selected_ions[ion] = ion_shift
         for loss in ion_losses:
-            ion = f"{ion}{loss}"
-            selected_ions[ion] = ion_shift + ion_losses[loss]
+            if loss not in LOSS_MASS:
+                print(f"Warning: loss type '{loss}' not recognized. Skipping.")
+                continue
+            
+            ion_name = f"{ion}{loss}"
+            selected_ions[ion_name] = ion_shift + LOSS_MASS[loss]
     return selected_ions 
 
 if __name__ == "__main__":
@@ -328,21 +434,31 @@ if __name__ == "__main__":
         "--out", required=True, type=str, default="annot.msalign",
         help="Output annotated msalign filename (default: ms2_spectra_annot.msalign)")
     parser.add_argument(
-        "--ion_type", required=False, type=str, choices = ['basic', 'all'], help="Ion type (basic/all)", default='basic')
+        "--table", required=True, type=str, default="combine_anno_table.tsv",
+        help="A TSV filename containing ion type and frequency")
+    parser.add_argument(
+        "--ion_type", required=False, type=str, choices = ['basic', 'all'], help="Ion type (basic/all)", default='all')
     parser.add_argument(
         "--neutral_loss", required=False, action='store_true', help="Include ion neutral losses (e.g., -H2O, -NH3)")
+    parser.add_argument(
+        "--error_tol", required=False, type=float, help="Error tolerance in ppm", default=20.0)
+    parser.add_argument("--da_tol", required=False, type=float, help="Error tolerance in Da", default=0.01)
+    parser.add_argument("--rate", required=False, type=float, help="Coverage rate (between 0-0.2)", default=0.0)
 
     args = parser.parse_args()
     output_filename = args.out or "ms2_spectra_annot.msalign"
 
-    ion_mode = args.ion_type
-    include_ion_losses = args.neutral_loss
-
+    ion_mode, selected_losses = ion_mode_selection(args.ion_type, args.neutral_loss)
+    ppm_tol = args.error_tol
+    da_tol = args.da_tol
+    cov_rate = float(args.rate)*100
+    
+    label_freq_dict = load_annotation_tables(args.table)
     # Prepare ion types for each activation method
     activation_ions = {}
     for activation in ['hcd', 'cid', 'etd', 'ecd', 'ethcd']:
-        selected_ions = get_ion_list(ion_mode, activation, include_ion_losses) 
+        selected_ions = get_ion_list(ion_mode, activation, selected_losses)
         activation_ions[activation] = selected_ions
-        #print(f"Annotating spectra with activation method: {activation}")
-
-    annot_msalign(args.msalign, output_filename, activation_ions)    
+        # if activation == 'hcd':
+            # print(f"Annotating spectra with activation method: {activation_ions[activation]}")
+    annot_msalign(args.msalign, label_freq_dict, cov_rate, output_filename, activation_ions, ppm_tol, da_tol)    

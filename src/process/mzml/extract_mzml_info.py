@@ -135,7 +135,7 @@ def mzML_ms_extract_with_ms1(dataset_id, mzml_filename):
 
  
 
-def process_mzml_folder(dataset_id, mzml_filename: str, output_filename: str):
+def process_mzml_file(dataset_id, mzml_filename: str, output_filename: str):
 
     print(f"Extracting metadata from: {mzml_filename} ({dataset_id})")
 
@@ -160,7 +160,7 @@ if __name__ == "__main__":
     dataset_id = sys.argv[1]
     input_mzml_filename = sys.argv[2]
     output_tsv_filename = sys.argv[3]
-    process_mzml_folder(dataset_id, input_mzml_filename, output_tsv_filename)
+    process_mzml_file(dataset_id, input_mzml_filename, output_tsv_filename)
 
         
     
