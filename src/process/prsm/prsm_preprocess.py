@@ -2,7 +2,7 @@ import argparse
 import csv
 import os
 import sys
-
+from remove_comment import read_file_remove_comments
 
 def basename_data_file_names(rows):
     """Replace each 'Data file name' value with its basename."""
@@ -19,21 +19,32 @@ def main():
     parser.add_argument("-o", "--output", help="Output TSV file path (default: stdout)")
     args = parser.parse_args()
 
-    with open(args.input, newline="") as infile:
-        reader = csv.DictReader(infile, delimiter="\t")
-        fieldnames = ["DATASET ID"] + reader.fieldnames
+    # remove comment lines and read TSV
+    df = read_file_remove_comments(args.input)
+    rows = df.to_dict("records")
+    rows = [dict(row, **{"DATASET ID": args.dataset_id}) for row in rows]
+    rows = basename_data_file_names(rows)
+    fieldnames = ["DATASET ID"] + list(df.columns)
 
-        outfile = open(args.output, "w", newline="") if args.output else sys.stdout
-        try:
-            writer = csv.DictWriter(outfile, fieldnames=fieldnames, delimiter="\t")
-            writer.writeheader()
-            rows = [dict(row, **{"DATASET ID": args.dataset_id}) for row in reader]
-            rows = basename_data_file_names(rows)
-            for row in rows:
-                writer.writerow(row)
-        finally:
-            if args.output:
-                outfile.close()
+    outfile = open(args.output, "w", newline="") if args.output else sys.stdout
+    try:
+        writer = csv.DictWriter(
+            outfile,
+            fieldnames=fieldnames,
+            delimiter="\t"
+        )
+
+        writer.writeheader()
+
+        for row in rows:
+            writer.writerow(row)
+
+    finally:
+        if args.output:
+            outfile.close()
+
+    if args.output:
+        print(f"Saved to: {args.output}")
 
 
 if __name__ == "__main__":
