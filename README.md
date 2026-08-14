@@ -83,7 +83,7 @@ This step merges the spectral information obtained from mzML, msalign, and featu
   * msalign_info_filename: Path to the TSV file containing MS2 spectral information extracted from msalign files.
   * feature_info_filename: Path to the TSV file containing MS2 feature information extracted from feature files.
   * toppic_info_filename: A preprocessed TSV file containing spectral identification results reported by TopPIC.
-  * ms_file_info_filename (optional): A TSV file containing data set information of the MS file.
+  * ms_file_info_filename: A TSV file containing data set information of the MS file.
   * output_tsv_filename: A TSV output file for storing merged spectral information extracted from mzML, msalign, feature, and TopPIC identification files 
 
 Run the command: 
