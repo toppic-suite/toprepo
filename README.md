@@ -88,7 +88,7 @@ This step merges the spectral information obtained from mzML, msalign, and featu
 
 Run the command: 
 ```
-python3 toprepo/src/process/tsv/merge_mzml_msalign_toppic_info_compatible.py spectra_msalign_info.tsv spectra_feature_info.tsv spectra_toppic_info.tsv toprepo/src/resources/toprepo_file_info_v1.2.0.tsv spectra_combined_info.tsv
+python3 toprepo/src/process/tsv/merge_mzml_msalign_toppic_info.py spectra_msalign_info.tsv spectra_feature_info.tsv spectra_toppic_info.tsv toprepo/src/resources/toprepo_file_info_v1.2.0.tsv spectra_combined_info.tsv
 ```
 ## 2. Generate annotated msalign files 
 
