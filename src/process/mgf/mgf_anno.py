@@ -110,7 +110,7 @@ def get_ms2_centroid_label(theo_file, form_df, ppm_tol):
     for ss in range(len(form_df)):
         # if ss % 100 == 0:
             # print(ss)
-        time_1_start = time()
+        # time_1_start = time()
         ms2_mass_value = form_df['mass_all'].iloc[ss]                     # column 'mass_all' stores MS2 deconvoluted masses in a list 
         ms2_inte_value = form_df['intensity_all'].iloc[ss]                # column 'intensity_all' stores MS2 deconvoluted intensities in a list
         ms2_ch_value = form_df['charge_all'].iloc[ss]                     # column 'charge_all' stores MS2 deconvoluted charges in a list
@@ -161,24 +161,32 @@ def get_ms2_centroid_label(theo_file, form_df, ppm_tol):
             
         # For each centroid m/z, find if any match exists
         ms2_centroid_annot = []
-
         # start to annotate for centroid peaks within error tolerance (ppm=20)
         for exp_mz, exp_inte in zip(ms2_mz_centroid_list, ms2_inte_centroid_list):
-            matched = ""
+            best_matched = ""
+            best_inte_err = float('inf')
             tol_da = exp_mz * ppm_tol * 1e-6
-            
-            idx = bisect.bisect_left(sorted_mz, exp_mz - tol_da) # return nearest index
+        
+            idx = bisect.bisect_left(sorted_mz, exp_mz - tol_da)
             while idx < len(sorted_mz) and sorted_mz[idx] <= exp_mz + tol_da:
-                if abs(sorted_mz[idx] - exp_mz) <= tol_da: 
+                if abs(sorted_mz[idx] - exp_mz) <= tol_da:
                     theo_mz, matched_mass, ms2_id, matched_charge, inte_flag, matched_idx, theo_intensity, inte_per = sorted_data[idx]
-                    if ms2_deconv_label_list[ms2_id] != "": 
-                        # check if the deconvoluted fragment mass has a valid annotation (not '?'), then include it to centroid annotation
-                        matched = (exp_inte, matched_mass, ms2_id, matched_charge, theo_mz, inte_flag, matched_idx, theo_intensity, inte_per, ms2_deconv_label_list[ms2_id])
-                    else:
-                        matched = (exp_inte, matched_mass, ms2_id, matched_charge, theo_mz, inte_flag, matched_idx, theo_intensity, inte_per, "")
-                    break
+        
+                    err_da = abs(sorted_mz[idx] - exp_mz)
+                    err_ppm = err_da / sorted_mz[idx] * 1e6
+                    inte_err = abs(theo_intensity - exp_inte) / theo_intensity if theo_intensity > 0 else float('inf')
+        
+                    if inte_err < best_inte_err:
+                        best_inte_err = inte_err
+                        label = ms2_deconv_label_list[ms2_id] if ms2_deconv_label_list[ms2_id] != "" else ""
+                        best_matched = (
+                            exp_inte, matched_mass, ms2_id, matched_charge,
+                            theo_mz, inte_flag, matched_idx,
+                            theo_intensity, inte_per, label
+                        )
                 idx += 1
-            ms2_centroid_annot.append(matched)
+        
+            ms2_centroid_annot.append(best_matched)
     
         ms2_centroid_label_all.append(ms2_centroid_annot)
         #time_3 += time() - time_3_start
@@ -186,7 +194,7 @@ def get_ms2_centroid_label(theo_file, form_df, ppm_tol):
     return ms2_centroid_label_all
 
 
-def filter_ms2_centroid_labels(ms2_centroid_label_all):
+def filter_ms2_centroid_labels(ms2_centroid_label_all, intensity_ratio=1.0, min_iso=2):
     """
     Filter matched centroid annotations based on theoretical intensity thresholds.
     Parameters:
@@ -208,19 +216,37 @@ def filter_ms2_centroid_labels(ms2_centroid_label_all):
         id_to_min_exp_intensity = {}
         for ms2_id, intensities in id_to_exp_intensities.items():
             id_to_min_exp_intensity[ms2_id] = min(intensities)
+            
+            
+        # Step 3: Count iso peaks per ms2_id
+        id_to_iso_count = defaultdict(int)
+        for entry in annot_list:
+            if isinstance(entry, tuple) and len(entry) > 7:
+                ms2_id = entry[2]
+                theo_intensity = entry[7]
+                min_exp_int = id_to_min_exp_intensity.get(ms2_id, 0)
+                if theo_intensity >= min_exp_int * intensity_ratio:
+                    id_to_iso_count[ms2_id] += 1   # only count if passes intensity
 
 
-        # Step 3: Filter out matches with theo_intensity < min_exp_intensity
+        # Step 4: Filter out matches with theo_intensity < min_exp_intensity
         filtered_list = []
         for entry in annot_list:
             if isinstance(entry, tuple) and len(entry) > 7:
                 ms2_id = entry[2]
                 theo_intensity = entry[7]
                 min_exp_intensity = id_to_min_exp_intensity.get(ms2_id, 0)
-                if theo_intensity >= min_exp_intensity: # if greater, then valid entry
-                    filtered_list.append(entry)
-                else:
-                    filtered_list.append("") # otherwise, set it to be empty
+                # minimum intensity
+                if theo_intensity < min_exp_intensity * intensity_ratio:
+                    filtered_list.append("")
+                    continue
+
+                # iso count filter
+                if id_to_iso_count[ms2_id] < min_iso:
+                    filtered_list.append("")
+                    continue
+
+                filtered_list.append(entry)
             else:
                 # Keep unmatched (empty string) entries
                 filtered_list.append(entry)
@@ -228,6 +254,7 @@ def filter_ms2_centroid_labels(ms2_centroid_label_all):
         filtered_ms2_centroid_label_all.append(filtered_list)
         
     return filtered_ms2_centroid_label_all
+
 
 
 
