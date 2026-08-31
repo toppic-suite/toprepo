@@ -88,7 +88,7 @@ This step merges the spectral information obtained from mzML, msalign, and featu
 
 Run the command: 
 ```
-python3 toprepo/src/process/tsv/merge_mzml_msalign_toppic_info.py spectra_msalign_info.tsv spectra_feature_info.tsv spectra_toppic_info.tsv toprepo/src/resources/toprepo_file_info_v1.2.0.tsv spectra_combined_info.tsv
+python3 toprepo/src/process/tsv/merge_mzml_msalign_toppic_info.py spectra_msalign_info.tsv spectra_feature_info.tsv spectra_toppic_info.tsv toprepo/src/resources/toprepo_file_info_v1.2.1.tsv spectra_combined_info.tsv
 ```
 ## 2. Generate annotated msalign files 
 
@@ -113,7 +113,7 @@ python3 toprepo/src/process/msalign_anno/merge_msalign_prsm.py --tsv spectra_com
 
 This step adds annotations to the msalign file.  
 ```
-python3 toprepo/src/process/msalign_anno/msalign_anno_based_frequency.py --msalign spectra_prsm_ms2.msalign --table toprepo/resources/toprepo_ion_freq_v1.2.0.tsv  --out spectra_anno_ms2.msalign 
+python3 toprepo/src/process/msalign_anno/msalign_anno_based_frequency.py --msalign spectra_prsm_ms2.msalign --table toprepo/resources/toprepo_ion_freq_v1.2.1.tsv  --out spectra_anno_ms2.msalign 
 ```
 
 ## 3. Generate annotated mgf files.
